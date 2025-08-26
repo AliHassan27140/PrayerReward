@@ -27,7 +27,6 @@ export default function RootLayout() {
 
   const [activeRoute, setActiveRoute] = useState<ValidRoutes>("/home");
   const [isLoggedIn, setIsLoggedIn] = useState<boolean>(false);
-  const [scale] = useState(new Animated.Value(1)); // For animating the flame icon
  const [ready, setReady] = useState(false);
  const [reloadKey, setReloadKey] = useState(0);
 
@@ -38,13 +37,17 @@ export default function RootLayout() {
       const storedPassword = await AsyncStorage.getItem('password');
       if (storedEmail && storedPassword) {
         setIsLoggedIn(true);
+        // Set the active route to home if user is logged in and we're not already on a page
+        if (!segments[0]) {
+          setActiveRoute("/home");
+        }
       } else {
         setIsLoggedIn(false);
       }
     };
 
     checkIfLoggedIn();
-  }, []);
+  }, [segments]);
 
   useEffect(() => {
     (async () => {
@@ -64,6 +67,17 @@ export default function RootLayout() {
     languageEvents.off('languageChanged', listener);
   };
 }, []);
+
+  // Update activeRoute based on current segments
+  useEffect(() => {
+    if (segments[0] && isLoggedIn) {
+      const currentPath = '/' + segments[0];
+      if (currentPath === "/home" || currentPath === "/minaboner" || currentPath === "/boneliv" || 
+          currentPath === "/instellningar" || currentPath === "/chat" || currentPath.startsWith("/aktivitet")) {
+        setActiveRoute(currentPath as ValidRoutes);
+      }
+    }
+  }, [segments, isLoggedIn]);
   
   const isIndexPage = !segments[0];
   const shouldShowMenu = !isIndexPage && isLoggedIn;
@@ -73,23 +87,6 @@ export default function RootLayout() {
     router.push(item); // Use activeRoute which is of ValidRoutes type
   };
 
-  const handleFlameButtonPress = () => {
-    console.log("Flame button pressed!");
-    Animated.sequence([
-      Animated.timing(scale, {
-        toValue: 1.2, // Scale up
-        duration: 150,
-        useNativeDriver: true,
-      }),
-      Animated.timing(scale, {
-        toValue: 1, // Scale back down
-        duration: 150,
-        useNativeDriver: true,
-      }),
-    ]).start();
-    console.log("Navigating to /home");
-    router.push("/home");
-  };
 
   if (!ready) {
     return (
