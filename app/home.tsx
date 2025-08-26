@@ -1,5 +1,5 @@
 import { Picker } from '@react-native-picker/picker'; // Lägg till denna import
-import { useNavigation } from '@react-navigation/native';
+import { useRouter } from 'expo-router';
 import { doc, setDoc, Timestamp } from 'firebase/firestore';
 import React, { useEffect, useState } from 'react';
 import { ActivityIndicator, Animated, Keyboard, Modal, StyleSheet, Text, TouchableOpacity, TouchableWithoutFeedback, View } from 'react-native';
@@ -11,7 +11,7 @@ import Icon from 'react-native-vector-icons/FontAwesome'; // Importera FontAweso
 
 
 export default function HomeScreen() {
-  const navigation = useNavigation<any>();
+  const router = useRouter();
   const [timer, setTimer] = useState<number>(0);
   const [isRunning, setIsRunning] = useState<boolean>(false);
   const [intervalId, setIntervalId] = useState<any>(null);
@@ -264,7 +264,7 @@ export default function HomeScreen() {
       setTimer(0);
       setIsRunning(false);
       setModalVisible(false);
-      navigation.navigate('BoneLivScreen');
+      router.push('/boneliv');
     } catch (error) {
       console.error('Fel vid sparande av bönestund:', error);
     } finally {
@@ -302,7 +302,7 @@ export default function HomeScreen() {
       setManualModalVisible(false);
       setTimer(0);
       setIsRunning(false);
-      navigation.navigate('BoneLivScreen');
+      router.push('/boneliv');
     } catch (error) {
       console.error('Fel vid sparande av bönestund:', error);
     } finally {
@@ -474,7 +474,7 @@ export default function HomeScreen() {
 </TouchableOpacity>
 
 
-{/* blixt function/}
+{/* blixt function */}
 
 
 
@@ -638,10 +638,10 @@ export default function HomeScreen() {
          <Text style={[styles.modalText, { marginTop: 0, textAlign: 'center' }]}>
   Hjälp till att utveckla Hayye appen genom ett frivilligt månadsstöd.{'\n'}
   Välj 9 kr, 19 kr eller 29 kr/månad.{'\n\n'}
-  <Text style={{ fontWeight: 'bold', fontSize: 16 }}>
+  </Text>
+  <Text style={[styles.modalText, { marginTop: 0, textAlign: 'center', fontWeight: 'bold', fontSize: 16 }]}>
     Med denna prenumeration försvinner alla reklamavbrott och appen blir helt reklamfri.
   </Text>
-</Text>
 
 
           {/* Knappar – längre och centrerade */}

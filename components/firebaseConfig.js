@@ -39,7 +39,9 @@ if (typeof window !== 'undefined') {
       analytics = getAnalytics(app);
       console.log("Firebase Analytics initialized successfully.");
     } else {
-      console.warn("Firebase Analytics is not supported in this environment.");
+      // Firebase Analytics is not supported in React Native/mobile environments
+      // This is expected behavior and can be safely ignored
+      console.log("Firebase Analytics not supported in this environment (expected for mobile).");
     }
   });
 }
