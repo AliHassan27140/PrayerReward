@@ -8,6 +8,7 @@ import { auth, firestore } from '../components/firebaseConfig';
 import { languageEvents } from '../hooks/languageEvents';
 import i18n, { setAppLanguage } from '../locales/i18n';
 import Icon from 'react-native-vector-icons/FontAwesome'; // Importera FontAwesome för hjärt-ikonen
+import { useRewardSystem } from '../hooks/useRewardSystem';
 
 
 export default function HomeScreen() {
@@ -21,7 +22,15 @@ export default function HomeScreen() {
   const [scaleValue] = useState(new Animated.Value(1));
   const [shadowOffset, setShadowOffset] = useState({ width: 0, height: 10 });
   const [isSaving, setIsSaving] = useState(false); // Track saving state
-  const [lightningModalVisible, setLightningModalVisible] = useState(false);
+
+  // Use reward system hook
+  const {
+    totalPoints,
+    currentLevel,
+    unlockedLevels,
+    hasLevelUp,
+    clearLevelUpNotification
+  } = useRewardSystem();
 
 
   // *** NYTT: state för stöd/donation-modalen ***
@@ -33,6 +42,38 @@ export default function HomeScreen() {
   const [manualMinutes, setManualMinutes] = useState<string>('0');
   const [manualSeconds, setManualSeconds] = useState<string>('0');
   const [language, setLanguage] = React.useState(i18n.locale || 'en');
+  const [lightningScale] = useState(new Animated.Value(1));
+
+  // Handle level up vibration effect
+  useEffect(() => {
+    if (hasLevelUp) {
+      // Vibration animation for lightning icon
+      Animated.sequence([
+        Animated.timing(lightningScale, {
+          toValue: 1.2,
+          duration: 200,
+          useNativeDriver: true,
+        }),
+        Animated.timing(lightningScale, {
+          toValue: 0.9,
+          duration: 150,
+          useNativeDriver: true,
+        }),
+        Animated.timing(lightningScale, {
+          toValue: 1.1,
+          duration: 150,
+          useNativeDriver: true,
+        }),
+        Animated.timing(lightningScale, {
+          toValue: 1,
+          duration: 200,
+          useNativeDriver: true,
+        }),
+      ]).start(() => {
+        clearLevelUpNotification();
+      });
+    }
+  }, [hasLevelUp, lightningScale, clearLevelUpNotification]);
 
   useEffect(() => {
     configureCalendarLocale(language);
@@ -420,61 +461,20 @@ export default function HomeScreen() {
 
 
 
-{/* Ny Modal för Blixt-ikonen */}
-<Modal
-  animationType="fade"
-  transparent={true}
-  visible={lightningModalVisible}
-  onRequestClose={() => setLightningModalVisible(false)}
->
-  <TouchableWithoutFeedback onPress={() => setLightningModalVisible(false)}>
-    <View style={styles.modalOverlay}>
-      <TouchableWithoutFeedback onPress={() => {}}>
-        <View style={styles.modalContent}>
-          <Text style={[styles.modalTitle, { marginBottom: 4 }]}>Tack för att du tryckte på blixten!</Text>
-
-          <View
-            style={{
-              height: 1,
-              backgroundColor: '#ccc',
-              width: '100%',
-              marginBottom: 12
-            }}
-          />
-
-          <Text style={[styles.modalText, { marginTop: 0, textAlign: 'center' }]}>
-            Vi uppskattar ditt engagemang. Blixtikonen ger oss energi! ⚡
-          </Text>
-
-          <View style={{ marginTop: 50, alignItems: 'center' }}>
-            <TouchableOpacity
-              onPress={() => setLightningModalVisible(false)}
-              style={styles.secondaryCloseBtn}
-            >
-              <Text style={styles.secondaryCloseBtnText}>
-                {i18n.t('home.cancel') || 'Stäng'}
-              </Text>
-            </TouchableOpacity>
-          </View>
-        </View>
-      </TouchableWithoutFeedback>
-    </View>
-  </TouchableWithoutFeedback>
-</Modal>
 
 
-{/* Lightning Icon in the top-right corner */}
 {/* Lightning Icon in the top-right corner */}
 <TouchableOpacity
   style={styles.lightningIconContainer}
-  onPress={() => setLightningModalVisible(true)} // Öppnar den nya modalen när blixtikonen trycks
+  onPress={() => router.push('/rewards')}
   activeOpacity={0.8}
 >
-  <Icon name="bolt" size={30} color="#FFEB3B" />  {/* Blixtikonen */}
+  <Animated.View style={{ transform: [{ scale: lightningScale }] }}>
+    <Icon name="bolt" size={30} color="#FFEB3B" />
+  </Animated.View>
 </TouchableOpacity>
 
 
-{/* blixt function */}
 
 
 
