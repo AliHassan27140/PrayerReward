@@ -111,7 +111,7 @@ export default function RewardsScreen() {
         {isSelected && isUnlocked && (
           <>
                   <Image
-          source={require('../assets/images/historic.jpeg')}
+          source={level.image}
           style={styles.historicImage}
           resizeMode='contain'
         />
