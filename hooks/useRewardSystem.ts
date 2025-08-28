@@ -1,5 +1,6 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { collection, query, onSnapshot } from 'firebase/firestore';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { auth, firestore } from '../components/firebaseConfig';
 
 // Level configuration
@@ -71,6 +72,33 @@ export const useRewardSystem = () => {
   const [previousLevel, setPreviousLevel] = useState<number>(0);
   const [hasLevelUp, setHasLevelUp] = useState<boolean>(false);
   const [loading, setLoading] = useState<boolean>(true);
+  const [hasBeenCleared, setHasBeenCleared] = useState<boolean>(false);
+
+  // Load persisted level up notification on init
+  useEffect(() => {
+    const loadLevelUpState = async () => {
+      try {
+        const userId = auth.currentUser?.uid;
+        if (userId) {
+          const storedLevelUp = await AsyncStorage.getItem(`hasLevelUp_${userId}`);
+          const storedLevel = await AsyncStorage.getItem(`levelUpLevel_${userId}`);
+          const clearedLevel = await AsyncStorage.getItem(`clearedLevel_${userId}`);
+          
+          // Only skip if we have a level up notification for a level that was already cleared
+          if (storedLevelUp === 'true' && storedLevel && clearedLevel && parseInt(storedLevel) <= parseInt(clearedLevel)) {
+            return; // Skip loading this already-cleared level
+          }
+          
+          if (storedLevelUp === 'true') {
+            setHasLevelUp(true);
+          }
+        }
+      } catch (error) {
+        console.error('Error loading level up state:', error);
+      }
+    };
+    loadLevelUpState();
+  }, []);
 
   useEffect(() => {
     const userId = auth.currentUser?.uid;
@@ -87,7 +115,7 @@ export const useRewardSystem = () => {
     
     const unsubscribe = onSnapshot(
       q,
-      (querySnapshot) => {
+      async (querySnapshot) => {
         let totalDurationInSeconds = 0;
 
         querySnapshot.forEach((docSnap) => {
@@ -100,9 +128,23 @@ export const useRewardSystem = () => {
         const newLevel = getCurrentLevel(points);
         const unlocked = getUnlockedLevels(points);
 
-        // Check for level up
-        if (newLevel > currentLevel && currentLevel > 0) {
-          setHasLevelUp(true);
+        // Check for level up (including first level from 0 to 1)
+        // But only if we haven't already processed this level and it hasn't been cleared
+        if (newLevel > currentLevel) {
+          const lastProcessedLevel = await AsyncStorage.getItem(`lastProcessedLevel_${userId}`);
+          
+          if (parseInt(lastProcessedLevel || '0') < newLevel) {
+            setHasLevelUp(true);
+            setHasBeenCleared(false);
+            // Persist level up notification with the specific level
+            try {
+              await AsyncStorage.setItem(`hasLevelUp_${userId}`, 'true');
+              await AsyncStorage.setItem(`levelUpLevel_${userId}`, newLevel.toString());
+              await AsyncStorage.setItem(`lastProcessedLevel_${userId}`, newLevel.toString());
+            } catch (error) {
+              console.error('Error persisting level up notification:', error);
+            }
+          }
         }
 
         setTotalPoints(points);
@@ -120,9 +162,25 @@ export const useRewardSystem = () => {
     return () => unsubscribe();
   }, [currentLevel]);
 
-  const clearLevelUpNotification = () => {
+  const clearLevelUpNotification = useCallback(async () => {
     setHasLevelUp(false);
-  };
+    setHasBeenCleared(true);
+    // Remove persisted level up notification and mark this specific level as cleared
+    try {
+      const userId = auth.currentUser?.uid;
+      if (userId) {
+        const currentNotificationLevel = await AsyncStorage.getItem(`levelUpLevel_${userId}`);
+        await AsyncStorage.removeItem(`hasLevelUp_${userId}`);
+        await AsyncStorage.removeItem(`levelUpLevel_${userId}`);
+        // Store which level was cleared so we don't show it again
+        if (currentNotificationLevel) {
+          await AsyncStorage.setItem(`clearedLevel_${userId}`, currentNotificationLevel);
+        }
+      }
+    } catch (error) {
+      console.error('Error clearing level up state:', error);
+    }
+  }, []);
 
   return {
     totalPoints,

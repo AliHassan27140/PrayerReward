@@ -33,6 +33,7 @@ export default function HomeScreen() {
   } = useRewardSystem();
 
 
+
   // *** NYTT: state för stöd/donation-modalen ***
   const [supportModalVisible, setSupportModalVisible] = useState<boolean>(false);
 
@@ -43,37 +44,63 @@ export default function HomeScreen() {
   const [manualSeconds, setManualSeconds] = useState<string>('0');
   const [language, setLanguage] = React.useState(i18n.locale || 'en');
   const [lightningScale] = useState(new Animated.Value(1));
+  const [vibrationInterval, setVibrationInterval] = useState<ReturnType<typeof setInterval> | null>(null);
 
   // Handle level up vibration effect
   useEffect(() => {
+    console.log('Vibration effect - hasLevelUp:', hasLevelUp);
     if (hasLevelUp) {
-      // Vibration animation for lightning icon
-      Animated.sequence([
-        Animated.timing(lightningScale, {
-          toValue: 1.2,
-          duration: 200,
-          useNativeDriver: true,
-        }),
-        Animated.timing(lightningScale, {
-          toValue: 0.9,
-          duration: 150,
-          useNativeDriver: true,
-        }),
-        Animated.timing(lightningScale, {
-          toValue: 1.1,
-          duration: 150,
-          useNativeDriver: true,
-        }),
-        Animated.timing(lightningScale, {
-          toValue: 1,
-          duration: 200,
-          useNativeDriver: true,
-        }),
-      ]).start(() => {
-        clearLevelUpNotification();
-      });
+      console.log('Starting lightning vibration animation');
+      // Start continuous vibration every 3 seconds
+      const startVibration = () => {
+        console.log('Lightning vibration animation triggered');
+        Animated.sequence([
+          Animated.timing(lightningScale, {
+            toValue: 1.2,
+            duration: 200,
+            useNativeDriver: true,
+          }),
+          Animated.timing(lightningScale, {
+            toValue: 0.9,
+            duration: 150,
+            useNativeDriver: true,
+          }),
+          Animated.timing(lightningScale, {
+            toValue: 1.1,
+            duration: 150,
+            useNativeDriver: true,
+          }),
+          Animated.timing(lightningScale, {
+            toValue: 1,
+            duration: 200,
+            useNativeDriver: true,
+          }),
+        ]).start();
+      };
+
+      // Start first vibration immediately
+      startVibration();
+      
+      // Set up interval for continuous vibration every 3 seconds
+      const interval = setInterval(startVibration, 3000);
+      setVibrationInterval(interval);
+      console.log('Lightning vibration interval set up');
+    } else {
+      console.log('Clearing lightning vibration interval');
+      // Clear interval when no level up
+      if (vibrationInterval) {
+        clearInterval(vibrationInterval);
+        setVibrationInterval(null);
+      }
     }
-  }, [hasLevelUp, lightningScale, clearLevelUpNotification]);
+
+    // Cleanup on unmount or dependency change
+    return () => {
+      if (vibrationInterval) {
+        clearInterval(vibrationInterval);
+      }
+    };
+  }, [hasLevelUp, lightningScale]);
 
   useEffect(() => {
     configureCalendarLocale(language);
@@ -466,7 +493,18 @@ export default function HomeScreen() {
 {/* Lightning Icon in the top-right corner */}
 <TouchableOpacity
   style={styles.lightningIconContainer}
-  onPress={() => router.push('/rewards')}
+  onPress={async () => {
+    console.log('Lightning icon clicked - hasLevelUp:', hasLevelUp);
+    // Clear level up notification and stop vibration when clicked
+    if (hasLevelUp) {
+      console.log('Clearing level up notification...');
+      await clearLevelUpNotification();
+      // Small delay to ensure AsyncStorage operation completes
+      await new Promise(resolve => setTimeout(resolve, 100));
+      console.log('Level up notification cleared, navigating to rewards');
+    }
+    router.push('/rewards');
+  }}
   activeOpacity={0.8}
 >
   <Animated.View style={{ transform: [{ scale: lightningScale }] }}>
