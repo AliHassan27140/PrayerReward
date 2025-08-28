@@ -90,8 +90,8 @@ export default function RewardsScreen() {
             </Text>
           </View>
         </View>
-
         {!isUnlocked && (
+          <>
           <View style={styles.progressContainer}>
             <View style={styles.progressBar}>
               <View
@@ -105,14 +105,23 @@ export default function RewardsScreen() {
               {progress.current}/{progress.required} pts
             </Text>
           </View>
+          </>
         )}
 
         {isSelected && isUnlocked && (
+          <>
+                  <Image
+          source={require('../assets/images/historic.jpeg')}
+          style={styles.historicImage}
+          resizeMode='contain'
+        />
+
           <View style={styles.levelDescription}>
             <Text style={styles.levelDescriptionText}>
               {level.title}
             </Text>
           </View>
+          </>
         )}
       </TouchableOpacity>
     );
@@ -316,6 +325,13 @@ const styles = StyleSheet.create({
   },
   progressContainer: {
     marginTop: 12,
+  },
+  historicImage: {
+    width: '100%',
+    height: 300,
+    borderRadius: 12,
+    marginBottom: 12,
+    marginTop: 20,
   },
   progressBar: {
     height: 8,
