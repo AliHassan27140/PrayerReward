@@ -1,9 +1,11 @@
 import { Picker } from '@react-native-picker/picker';
 import { collection, deleteDoc, doc, onSnapshot, orderBy, query } from 'firebase/firestore';
 import React, { useEffect, useState } from 'react';
-import { ActivityIndicator, FlatList, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { ActivityIndicator, Alert, FlatList, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { GestureHandlerRootView, Swipeable } from 'react-native-gesture-handler';
+import { useRouter } from 'expo-router';
 import { auth, firestore } from '../components/firebaseConfig';
+import { useRewardSystem } from '../hooks/useRewardSystem';
 import i18n from '../locales/i18n';
 
 interface SavedTime {
@@ -23,6 +25,8 @@ const t = (key: string, defaultValue = '') => {
 };
 
 export default function BoneLivScreen({}: Props) {
+  const router = useRouter();
+  const { hasLevelUp, clearLevelUpNotification } = useRewardSystem();
   const currentYear = new Date().getFullYear().toString();
 
   const monthDict: Record<string, string> | undefined =
@@ -56,6 +60,33 @@ export default function BoneLivScreen({}: Props) {
 
   const [showYearPicker, setShowYearPicker] = useState<boolean>(false);
   const [showMonthPicker, setShowMonthPicker] = useState<boolean>(false);
+
+  useEffect(() => {
+    if (hasLevelUp) {
+      const timer = setTimeout(() => {
+        Alert.alert(
+          t('boneliv.rewardUnlocked', 'You have unlocked a new reward'),
+          t('boneliv.goThere', 'Go there now?'),
+          [
+            {
+              text: t('boneliv.cancel', 'Cancel'),
+              style: 'cancel',
+              onPress: () => clearLevelUpNotification()
+            },
+            {
+              text: t('boneliv.goThere', 'Go there'),
+              onPress: async () => {
+                await clearLevelUpNotification();
+                router.push('/rewards');
+              }
+            }
+          ]
+        );
+      }, 500);
+
+      return () => clearTimeout(timer);
+    }
+  }, [hasLevelUp, clearLevelUpNotification, router]);
 
   const getMonthNumber = (month: string): string => {
     const index = months.indexOf(month);
