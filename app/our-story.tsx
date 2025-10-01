@@ -1,5 +1,5 @@
 import React, { useEffect } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, ScrollView } from 'react-native';
+import { ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { useNavigation } from '@react-navigation/native';
@@ -17,50 +17,55 @@ const OurStoryScreen = () => {
     }
   };
 
-  // Hide the sidebar button on this screen
   useEffect(() => {
-    // Set header options to hide the sidebar button
     navigation.setOptions({
       headerLeft: () => (
         <TouchableOpacity onPress={handleGoBack} style={styles.backButton}>
           <Ionicons name="arrow-back" size={30} color="#FFF" />
         </TouchableOpacity>
       ),
-      // Hide the drawer button (sidebar toggle)
-      drawerIcon: () => null, // Hide the drawer icon
-      drawerLockMode: 'locked-closed', // Lock the drawer so it can't be opened
+      drawerIcon: () => null, 
+      drawerLockMode: 'locked-closed',
     });
 
-    // Clean up when leaving the screen
     return () => {
       navigation.setOptions({
-        drawerLockMode: 'unlocked', // Restore drawer toggle functionality
+        drawerLockMode: 'unlocked', 
       });
     };
   }, [navigation]);
 
   return (
     <View style={[styles.container, { backgroundColor: '#522f60ff' }]}>
-      {/* Upper background view with the same color as the container */}
-      <View style={[styles.upperBackground, { backgroundColor: '#522f60ff' }]}>
-        {/* Text header above the background */}
-        <Text style={styles.headerText}>Vår Historia</Text>
+      {/* Back Button and Header */}
+      <View style={styles.headerContainer}>
+        <TouchableOpacity onPress={handleGoBack} style={styles.backButton}>
+          <Ionicons name="arrow-back" size={30} color="#FFF" />
+        </TouchableOpacity>
+        <Text style={styles.header}>Vår Historia</Text>
       </View>
 
-      {/* Back button */}
-      <TouchableOpacity onPress={handleGoBack} style={styles.backButton}>
-        <Ionicons name="arrow-back" size={30} color="#FFF" />
-      </TouchableOpacity>
+      <ScrollView contentContainerStyle={styles.menuContainer}>
+        {/* Story Section */}
+    <Text style={styles.sectionTitle}>Väx i din tro och böneliv</Text>
+<Text style={styles.bodyText}>
+  Vår passion handlar om att hjälpa människor att växa i sin tro och böneliv. Vi tror att en stark relation med Gud inte bara bygger på andakt, utan också på medvetenhet och reflektion över den andliga resan. Därför har vi skapat ett verktyg för att inte bara be, utan också för att aktivt följa din utveckling och se hur dina böner påverkar ditt liv.
+</Text>
+<Text style={styles.bodyText}>
+  Genom att ha kontroll över din bönestatistik och kristna liv kan du se de konkreta resultaten av din andakt. Varje bön, varje stund av tystnad och reflektion, gör skillnad. Med vår app kan du enkelt hålla reda på dina böner, de tider du bett, och hur du utvecklas i din relation till Gud.
+</Text>
+<Text style={styles.bodyText}>
+  Vår vision är att hjälpa dig att fortsätta växa, både andligt och mentalt, och att ge dig verktygen att förstå din resa med Gud på djupet. Vi tror att det att se sin utveckling, inte bara genom bön utan även genom att förstå sin egen andliga tillväxt, kan ge en extra dimension till ditt liv.
+</Text>
 
-      <ScrollView contentContainerStyle={styles.contentContainer}>
-        <Text style={styles.bodyText}>
-          Vi är ett team som har samlats för att göra världen lite bättre genom innovation och samarbete. Vår resa började med en idé och har vuxit till något mycket större än vi någonsin kunde föreställa oss.
-        </Text>
-        <Text style={styles.bodyText}>
-          Genom åren har vi kämpat med många utmaningar, men vår passion och vårt engagemang har drivit oss framåt. Vi har alltid haft ett starkt fokus på att skapa hållbara lösningar som gör skillnad i människors liv.
-        </Text>
-        <Text style={styles.bodyText}>
-          Från våra första steg till vår nuvarande framgång, har varje del av vår historia format den vi är idag. Vi ser fram emot att fortsätta växa och göra världen ännu bättre!
+<Text style={styles.storyHintText}>
+  Låt oss vara en del av din resa. Klicka här för att börja följa din utveckling.
+</Text>
+
+
+        {/* Faint Text */}
+        <Text style={styles.storyHintText}>
+          Klicka här för att läsa mer om vår resa.
         </Text>
       </ScrollView>
     </View>
@@ -70,52 +75,48 @@ const OurStoryScreen = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    padding: 20,  // Add some padding to the container for better spacing
+    paddingHorizontal: 20,
   },
-  upperBackground: {
+  headerContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: 20,
+    marginBottom: 20,
+    justifyContent: 'center',
+  },
+  backButton: {
     position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    height: 120, // This defines the height of the background bar at the top
-    backgroundColor: '#522f60ff', // Matching background color
-    zIndex: 10, // Make sure it's below the back button
-    justifyContent: 'center', // Center the text vertically within the background
-    alignItems: 'center', // Center the text horizontally within the background
+    left: 0, 
+    zIndex: 10,
   },
-  contentContainer: {
-    paddingBottom: 40,  // Ensure content doesn't get cut off on small screens
-  },
-  headerText: {
-    color: '#FFF',
-    fontSize: 30,
+  header: {
+    fontSize: 22,
+    fontWeight: '600',
+    color: '#F5E6D9',
     textAlign: 'center',
-    marginTop: 50,
-    fontWeight: 'bold',
+  },
+  sectionTitle: {
+    fontSize: 16,
+    fontWeight: '500',
+    color: '#F5E6D9',
+    marginVertical: 10,
+  },
+  menuContainer: {
+    paddingTop: 10,
   },
   bodyText: {
-    color: '#FFF',
     fontSize: 18,
+    color: '#F5E6D9',
     textAlign: 'left',
     marginTop: 20,
     lineHeight: 25,
   },
-  backButton: {
-    position: 'absolute',
-    top: 69,  // Placerar knappen på samma höjd som i Sidebar-knappen
-    left: 20, // Lika vänsterposition som sidomenyn
-    zIndex: 20, // Säkerställer att knappen visas över andra element
-    backgroundColor: '#9B59B6', // Lila bakgrund som i sidomenyn
-    borderRadius: 50, // Rundar knappen
-    width: 52,  // Lika storlek på knappen som sidebar
-    height: 52, // Sätt samma höjd som bredden för att göra knappen rund
-    justifyContent: 'center', // Centrerar innehållet (ikonen) horisontellt
-    alignItems: 'center', // Centrerar innehållet (ikonen) vertikalt
-    padding: 0,  // Ingen extra padding eftersom vi har satt bredd och höjd
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.2,
-    shadowRadius: 5,
+  storyHintText: {
+    fontSize: 12,
+    color: '#F5E6D9',
+    textAlign: 'center',
+    marginTop: 10,
+    opacity: 0.7,  // Making the text faint
   },
 });
 

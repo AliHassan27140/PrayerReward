@@ -56,11 +56,13 @@ export default {
     }
   },
   home: {
+    title2: "Matthew 7:7",
+    title3: "Ask, and it will be given to you.",
     title: "Prayer Time",
     start: "Start",
     stop: "Stop",
     yourPrayerToday: "Your prayer time today",
-    time: "Time",
+    time: "Duration time",
     save: "Save",
     restart: "Restart",
     cancel: "Cancel",
@@ -73,7 +75,9 @@ export default {
     seconds: "Seconds",
     infoButton: "Info",
     errorNotLoggedIn: "User is not logged in",
-    saving: "Saving..."
+    saving: "Saving...",
+    enterTime: "Enter time",  // Added the missing translation here
+    duration: "Duration"  // Added "Varaktighet" (Duration)
   },
   rootMenu: {
     prayerBook: "Prayer Book",
@@ -92,6 +96,7 @@ export default {
     text: "Text",
     done: "Done",
     save: "Save",
+    noPrayers: "No saved notes."
   },
   boneliv: {
     delete: "Delete",
@@ -101,8 +106,8 @@ export default {
     seconds: "Seconds:",
     noSavedPrayerTimes: "No prayer times saved yet.",
     time: "Time",
-    duration: "Duration",
-    totalCount: "Total"  
+    duration: "Duration",  // Added "Varaktighet" (Duration)
+    totalCount: "Total"
   },
   chat: {
     title: "Questions & Answers",
@@ -196,5 +201,22 @@ export default {
       "sat": "Sat"
     },
     "today": "Today"
+  },
+
+  rewards: {
+    headerTitle: "🏆 Reward System",
+    allTime: "All Time",
+    pointsInfo: "(30 minutes = 1 point)",
+    totalPoints: "Total Points",
+    currentLevel: "Current Level",
+    unlocked: "Unlocked",
+    thresholdsTitle: "Level thresholds (7 levels, cumulative points)",
+    level: "Level",
+    points: "points",
+    pts: "pts",
+    progress: "Progress",
+    of: "of",
+    locked: "Locked",
+    back: "Back",
   }
 };

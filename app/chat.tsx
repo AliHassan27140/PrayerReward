@@ -7,7 +7,6 @@ import {
   Text,
   TouchableOpacity,
   View,
-  LayoutAnimation,
   Platform,
   UIManager,
 } from 'react-native';
@@ -16,11 +15,6 @@ import i18n from '../locales/i18n';
 const TOPBAR_HEIGHT = 70;      // Höjd på topbaren
 const TOP_OFFSET = 40;         // Hur långt ner från toppen baren ligger
 const SIDEBAR_BTN_WIDTH = 48;  // Reserverat utrymme för sidomeny-knapp
-
-// Aktivera LayoutAnimation på Android
-if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental) {
-  UIManager.setLayoutAnimationEnabledExperimental(true);
-}
 
 type QA = {
   question: string;
@@ -34,13 +28,12 @@ export default function FAQScreen() {
   const qaList = i18n.t('chat.questions', { returnObjects: true }) as QA[];
 
   const toggle = useCallback((index: number) => {
-    LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
-    setOpenIndex(prev => (prev === index ? null : index));
+    setOpenIndex(prev => (prev === index ? null : index)); // Ingen animation här
   }, []);
 
-  // Liten animation direkt när skärmen visas
+  // Ta bort animationen när skärmen visas
   useEffect(() => {
-    LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
+    // Ingen animation här
   }, []);
 
   return (
@@ -60,7 +53,7 @@ export default function FAQScreen() {
           style={styles.scroll}
           contentContainerStyle={{
             paddingTop: TOP_OFFSET + TOPBAR_HEIGHT + 10,
-            paddingBottom: 40,
+            paddingBottom: 100,
           }}
         >
           <View style={styles.container}>
@@ -115,7 +108,7 @@ export default function FAQScreen() {
 }
 
 const COLORS = {
-  bg: '#5B2C6F',          // Bakgrund (lila)
+  bg: '#4A235A',          // Bakgrund (lila)
   card: '#9B59B6',        // Primär card
   cardAlt: '#522F60FF',   // Svarsbakgrund
   textOnCard: '#F5E6D9',  // Rubriktext
@@ -147,7 +140,7 @@ const styles = StyleSheet.create({
     color: COLORS.textOnCard,
     fontWeight: 'bold',
     textAlign: 'center',
-    marginTop: -5,
+    marginTop: 0, // Justera marginTop till 0 eller ett lägre värde för att flytta upp
   },
 
   scroll: { flex: 1 },

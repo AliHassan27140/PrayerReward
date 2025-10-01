@@ -1,51 +1,51 @@
-import React, { useEffect } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { useRouter } from 'expo-router';
+import React, { useEffect, useState } from 'react';
+import { ScrollView, StyleSheet, Text, TouchableOpacity, View, Linking } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 
-const ContactUsScreen = () => {
-  const router = useRouter();
+const UserAccountScreen = () => {
   const navigation = useNavigation();
 
-  // Handle going back to the previous screen
-  const handleGoBack = () => {
-    if (router.canGoBack()) {
-      router.back(); // This goes back to the previous screen using expo-router
-    } else {
-      navigation.goBack(); // This goes back to the previous screen using React Navigation
-    }
-  };
+  const [userData, setUserData] = useState({
+    email: '',
+  });
 
-  // Hide the sidebar button on this screen
   useEffect(() => {
-    // Set header options to hide the sidebar button
-    navigation.setOptions({
-      headerLeft: () => (
-        <TouchableOpacity onPress={handleGoBack} style={styles.backButton}>
-          <Ionicons name="arrow-back" size={30} color="#FFF" />
-        </TouchableOpacity>
-      ),
-      // Hide the drawer button (sidebar toggle)
-      drawerIcon: () => null, // Hide the drawer icon
-      drawerLockMode: 'locked-closed', // Lock the drawer so it can't be opened
+    // Simulating user data; no need to use Firebase here since we are replacing the email text.
+    setUserData({
+      email: 'Hayyeapp', // Use Hayyeapp instead of email address.
     });
+  }, []);
 
-    // Clean up when leaving the screen
-    return () => {
-      navigation.setOptions({
-        drawerLockMode: 'unlocked', // Restore drawer toggle functionality
-      });
-    };
-  }, [navigation]);
+  // Function to open Instagram link when the section is clicked
+  const handleInstagramPress = () => {
+    Linking.openURL('https://www.instagram.com/hayyeapp/')
+      .catch((err) => console.error("Couldn't open Instagram", err));
+  };
 
   return (
     <View style={[styles.container, { backgroundColor: '#522f60ff' }]}>
-      {/* Back button */}
-      <TouchableOpacity onPress={handleGoBack} style={styles.backButton}>
-        <Ionicons name="arrow-back" size={30} color="#FFF" />
-      </TouchableOpacity>
-      <Text style={styles.text}>Kontakta oss</Text>
+      {/* Back Button and Header */}
+      <View style={styles.headerContainer}>
+        <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
+          <Ionicons name="arrow-back" size={30} color="#FFF" />
+        </TouchableOpacity>
+        <Text style={styles.header}>Kontakta oss</Text>
+      </View>
+
+      <ScrollView contentContainerStyle={styles.menuContainer}>
+        {/* Instagram Section */}
+        <Text style={styles.sectionTitle}>INSTAGRAM</Text>
+        <TouchableOpacity onPress={handleInstagramPress} style={styles.menuItem}>
+          <Ionicons name="logo-instagram" size={24} color="#F5E6D9" />
+          <Text style={styles.menuText}>Hayyeapp</Text> {/* Keeping 'Instagram' text */}
+        </TouchableOpacity>
+
+        {/* Faint Text Under Instagram Section */}
+        <Text style={styles.instagramHintText}>
+          Klicka på Instagram formen för att komma till våran instagram
+        </Text>
+      </ScrollView>
     </View>
   );
 };
@@ -53,31 +53,60 @@ const ContactUsScreen = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    padding: 20,  // Add some padding to the container for better spacing
+    paddingHorizontal: 20,
   },
-  text: {
-    color: '#FFF',
-    fontSize: 24,
-    textAlign: 'center',
-    marginTop: 50,
+  headerContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: 20, // Space from the top
+    marginBottom: 20,
+    justifyContent: 'center', // Center both the icon and header
   },
   backButton: {
     position: 'absolute',
-    top: 69,  // Placerar knappen på samma höjd som i Sidebar-knappen
-    left: 20, // Lika vänsterposition som sidomenyn
-    zIndex: 20, // Säkerställer att knappen visas över andra element
-    backgroundColor: '#9B59B6', // Lila bakgrund som i sidomenyn
-    borderRadius: 50, // Rundar knappen
-    width: 52,  // Lika storlek på knappen som sidebar
-    height: 52, // Sätt samma höjd som bredden för att göra knappen rund
-    justifyContent: 'center', // Centrerar innehållet (ikonen) horisontellt
-    alignItems: 'center', // Centrerar innehållet (ikonen) vertikalt
-    padding: 0,  // Ingen extra padding eftersom vi har satt bredd och höjd
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.2,
+    left: 0, // Move back button to the left
+    zIndex: 10,
+  },
+  header: {
+    fontSize: 22,
+    fontWeight: '600',
+    color: '#F5E6D9',
+    textAlign: 'center',
+  },
+  sectionTitle: {
+    fontSize: 16,
+    fontWeight: '500',
+    color: '#F5E6D9',
+    marginVertical: 10,
+  },
+  menuContainer: {
+    paddingTop: 10,
+  },
+  menuItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 15,
+    paddingHorizontal: 10,
+    marginBottom: 10,
+    borderRadius: 8,
+    backgroundColor: '#6a4b8d',
+    shadowColor: '#000000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
     shadowRadius: 5,
+  },
+  menuText: {
+    fontSize: 16,
+    marginLeft: 15,
+    color: '#F5E6D9',
+  },
+  instagramHintText: {
+    fontSize: 12,
+    color: '#F5E6D9',
+    textAlign: 'center',
+    marginTop: 10,
+    opacity: 0.7,  // To make the text faint
   },
 });
 
-export default ContactUsScreen;
+export default UserAccountScreen;

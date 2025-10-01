@@ -50,18 +50,19 @@ const ChangeLanguageScreen = () => {
 
   return (
     <View style={[styles.container, { backgroundColor: '#522f60ff' }]}>
-      {/* Back Button – samma stil som i UserAccountScreen */}
-      <TouchableOpacity onPress={handleGoBack} style={styles.backButton}>
-        <Ionicons name="arrow-back" size={30} color="#FFF" />
-      </TouchableOpacity>
-
-      <Text style={styles.header}>{i18n.t('settings.selectLanguage')}</Text>
+      {/* Header - Title and Back Button */}
+      <View style={styles.headerContainer}>
+        <Text style={styles.header}>{i18n.t('settings.selectLanguage')}</Text>
+        <TouchableOpacity onPress={handleGoBack} style={styles.backButton}>
+          <Ionicons name="arrow-back" size={30} color="#FFF" />
+        </TouchableOpacity>
+      </View>
 
       <ScrollView contentContainerStyle={styles.menuContainer}>
-        {/* User Info-liknande sektionstitel */}
+        {/* Language section title */}
         <Text style={styles.sectionTitle}>{i18n.t('settings.languageSectionTitle') || 'SPRÅK'}</Text>
 
-        {/* Aktuellt språk */}
+        {/* Current language */}
         <View style={styles.menuItem}>
           <Ionicons name="language-outline" size={24} color="#F5E6D9" />
           <Text style={styles.menuText}>
@@ -69,7 +70,7 @@ const ChangeLanguageScreen = () => {
           </Text>
         </View>
 
-        {/* Språkalternativ – samma kortstil som i UserAccountScreen */}
+        {/* Language options */}
         {LANGUAGES.map((lang) => {
           const isSelected = selectedLanguage === lang.code;
           return (
@@ -90,7 +91,7 @@ const ChangeLanguageScreen = () => {
         })}
       </ScrollView>
 
-      {/* Footer – samma som i UserAccountScreen */}
+      {/* Footer */}
       <View style={styles.footer}>
         <Text style={styles.footerText}>Gjort med ❤️ av Reactcap</Text>
         <View style={styles.socialLinks}>
@@ -102,17 +103,26 @@ const ChangeLanguageScreen = () => {
 };
 
 const styles = StyleSheet.create({
-  // ---- Gemensamt med UserAccountScreen ----
   container: {
     flex: 1,
     padding: 20,
+  },
+  headerContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: 0,  // Adjusted to add space from the top
+    marginBottom: 20,
+    justifyContent: 'center',  // Center both the icon and header
+  },
+   backButton: {
+    position: 'absolute',
+    left: 0, // Move back button to the left
+    zIndex: 10,
   },
   header: {
     fontSize: 22,
     fontWeight: '600',
     color: '#F5E6D9',
-    marginTop: 56,
-    marginBottom: 20,
     textAlign: 'center',
   },
   sectionTitle: {
@@ -165,24 +175,6 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'center',
     gap: 20,
-  },
-  // Back Button – identisk stil
-  backButton: {
-    position: 'absolute',
-    top: 69,
-    left: 20,
-    zIndex: 20,
-    backgroundColor: '#9B59B6',
-    borderRadius: 50,
-    width: 52,
-    height: 52,
-    justifyContent: 'center',
-    alignItems: 'center',
-    padding: 0,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.2,
-    shadowRadius: 5,
   },
 });
 

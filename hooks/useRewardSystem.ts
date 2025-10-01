@@ -16,13 +16,13 @@ export const levels = [
   // { level: 7, totalPoints: 28, timeEquivalent: "28 min", title: "GRAND MASTER 👑✨" }
   
   // For production (30 minutes = 1 point):
-  { level: 1, totalPoints: 1, timeEquivalent: "30 min", title: "The First Step 🟢", image: require('../assets/images/historic.jpeg') },
-  { level: 2, totalPoints: 3, timeEquivalent: "1h 30m", title: "Warming Up 🔥", image: require('../assets/images/historic.jpeg') },
-  { level: 3, totalPoints: 6, timeEquivalent: "3h", title: "Solid Ground 🧱", image: require('../assets/images/historic.jpeg') },
-  { level: 4, totalPoints: 10, timeEquivalent: "5h", title: "Marathon Trainee 🏃", image: require('../assets/images/historic.jpeg') },
-  { level: 5, totalPoints: 15, timeEquivalent: "7h 30m", title: "Advanced Focus 🎯", image: require('../assets/images/historic.jpeg') },
-  { level: 6, totalPoints: 21, timeEquivalent: "10h 30m", title: "Focus Master 🥇", image: require('../assets/images/historic.jpeg') },
-  { level: 7, totalPoints: 28, timeEquivalent: "14h", title: "GRAND MASTER 👑✨", image: require('../assets/images/historic.jpeg') }
+  { level: 1, totalPoints: 1, timeEquivalent: "30 min", title: "The First Step 🟢", image: require('../assets/images/IMG_4794.jpeg') },
+  { level: 2, totalPoints: 3, timeEquivalent: "1h 30m", title: "Warming Up 🔥", image: require('../assets/images/IMG_4791.jpeg') },
+  { level: 3, totalPoints: 6, timeEquivalent: "3h", title: "Solid Ground 🧱", image: require('../assets/images/trad.jpeg') },
+  { level: 4, totalPoints: 10, timeEquivalent: "5h", title: "Marathon Trainee 🏃", image: require('../assets/images/vaso.jpeg') },
+  { level: 5, totalPoints: 15, timeEquivalent: "7h 30m", title: "Advanced Focus 🎯", image: require('../assets/images/santo.jpeg') },
+  { level: 6, totalPoints: 21, timeEquivalent: "10h 30m", title: "Focus Master 🥇", image: require('../assets/images/IMG_4794.jpeg') },
+  { level: 7, totalPoints: 28, timeEquivalent: "14h", title: "GRAND MASTER 👑✨", image: require('../assets/images/IMG_4791.jpeg') }
   // ========== END LEVEL CONFIGURATION TEST ==========
 ];
 

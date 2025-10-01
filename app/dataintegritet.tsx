@@ -17,21 +17,17 @@ const DataintegritetScreen = () => {
     }
   };
 
-  // Hide the sidebar button on this screen
   useEffect(() => {
-    // Set header options to hide the sidebar button
     navigation.setOptions({
       headerLeft: () => (
         <TouchableOpacity onPress={handleGoBack} style={styles.backButton}>
           <Ionicons name="arrow-back" size={30} color="#FFF" />
         </TouchableOpacity>
       ),
-      // Hide the drawer button (sidebar toggle)
-      drawerIcon: () => null, // Hide the drawer icon
+      drawerIcon: () => null, 
       drawerLockMode: 'locked-closed', // Lock the drawer so it can't be opened
     });
 
-    // Clean up when leaving the screen
     return () => {
       navigation.setOptions({
         drawerLockMode: 'unlocked', // Restore drawer toggle functionality
@@ -41,21 +37,17 @@ const DataintegritetScreen = () => {
 
   return (
     <View style={[styles.container, { backgroundColor: '#522f60ff' }]}>
-      {/* Upper background view with the same color as the container */}
-      <View style={[styles.upperBackground, { backgroundColor: '#522f60ff' }]}>
-        {/* Text header above the background */}
-        <Text style={styles.headerText}>Integritet</Text>
+      {/* Back Button and Header */}
+      <View style={styles.headerContainer}>
+        <TouchableOpacity onPress={handleGoBack} style={styles.backButton}>
+          <Ionicons name="arrow-back" size={30} color="#FFF" />
+        </TouchableOpacity>
+        <Text style={styles.header}>Integritetspolicy</Text>
       </View>
 
-      {/* Back button */}
-      <TouchableOpacity onPress={handleGoBack} style={styles.backButton}>
-        <Ionicons name="arrow-back" size={30} color="#FFF" />
-      </TouchableOpacity>
-
-      <ScrollView contentContainerStyle={styles.contentContainer}>
-        <Text style={styles.bodyText}>
-          Inga cookies. Inga annonser. Ingen spårning.
-        </Text>
+      <ScrollView contentContainerStyle={styles.scrollContainer}>
+        {/* Privacy Content */}
+        <Text style={styles.sectionTitle}>Inga cookies. Inga annonser. Ingen spårning.</Text>
         <Text style={styles.bodyText}>
           Dina böneuppgifter lämnar aldrig din enhet.
         </Text>
@@ -74,6 +66,9 @@ const DataintegritetScreen = () => {
         <Text style={styles.bodyText}>
           Vi har byggt Prayminder på det här sättet eftersom vi tror att bön alltid ska vara säker, privat och enkel.
         </Text>
+
+        {/* Faint Text */}
+        <Text style={styles.privacyHintText}></Text>
       </ScrollView>
     </View>
   );
@@ -84,26 +79,34 @@ const styles = StyleSheet.create({
     flex: 1,
     padding: 20,  // Add some padding to the container for better spacing
   },
-  upperBackground: {
+  headerContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: 0, // Adjust the marginTop to make the back button a bit higher
+    marginBottom: 20,
+    justifyContent: 'center', // Center both the icon and header
+  },
+  backButton: {
     position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    height: 120, // This defines the height of the background bar at the top
-    backgroundColor: '#522f60ff', // Matching background color
-    zIndex: 10, // Make sure it's below the back button
-    justifyContent: 'center', // Center the text vertically within the background
-    alignItems: 'center', // Center the text horizontally within the background
+    left: 0, 
+    zIndex: 10,
   },
-  contentContainer: {
-    paddingBottom: 40,  // Ensure content doesn't get cut off on small screens
-  },
-  headerText: {
-    color: '#FFF',
-    fontSize: 30,
+  header: {
+    fontSize: 22,
+    fontWeight: '600',
+    color: '#F5E6D9',
     textAlign: 'center',
-    marginTop: 50,
-    fontWeight: 'bold',
+  },
+  sectionTitle: {
+    fontSize: 16,
+    fontWeight: '500',
+    color: '#F5E6D9',
+    marginVertical: 10,
+  },
+  scrollContainer: {
+    flexGrow: 1,  // Makes sure the ScrollView takes up all available space
+    paddingBottom: 100,  // Add some padding at the bottom to avoid content going under the back button
+    marginTop: 0,  // Adjust this value to push text down under the back button
   },
   bodyText: {
     color: '#FFF',
@@ -112,22 +115,12 @@ const styles = StyleSheet.create({
     marginTop: 20,
     lineHeight: 25,
   },
-  backButton: {
-    position: 'absolute',
-    top: 69,  // Placerar knappen på samma höjd som i Sidebar-knappen
-    left: 20, // Lika vänsterposition som sidomenyn
-    zIndex: 20, // Säkerställer att knappen visas över andra element
-    backgroundColor: '#9B59B6', // Lila bakgrund som i sidomenyn
-    borderRadius: 50, // Rundar knappen
-    width: 52,  // Lika storlek på knappen som sidebar
-    height: 52, // Sätt samma höjd som bredden för att göra knappen rund
-    justifyContent: 'center', // Centrerar innehållet (ikonen) horisontellt
-    alignItems: 'center', // Centrerar innehållet (ikonen) vertikalt
-    padding: 0,  // Ingen extra padding eftersom vi har satt bredd och höjd
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.2,
-    shadowRadius: 5,
+  privacyHintText: {
+    fontSize: 12,
+    color: '#F5E6D9',
+    textAlign: 'center',
+    marginTop: 10,
+    opacity: 0.7,  // Faint text effect
   },
 });
 

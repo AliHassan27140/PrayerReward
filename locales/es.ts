@@ -56,11 +56,13 @@ export default {
     }
   },
   home: {
-    title: "Tiempo de oración",
+    title2: "Mateo 7:7",
+    title3: "Pide, y se te dará.",
+    title: "Hora de la Oración",
     start: "Iniciar",
     stop: "Detener",
     yourPrayerToday: "Tu tiempo de oración hoy",
-    time: "Tiempo",
+    time: "Tiempo de duración",
     save: "Guardar",
     restart: "Reiniciar",
     cancel: "Cancelar",
@@ -73,7 +75,9 @@ export default {
     seconds: "Segundos",
     infoButton: "Info",
     errorNotLoggedIn: "El usuario no ha iniciado sesión",
-    saving: "Guardando..."
+    saving: "Guardando...",
+    enterTime: "Introducir tiempo",  // Aquí está la traducción de "Enter time" al español
+    duration: "Duración"  // Añadido "Varaktighet" (Duration)
   },
   rootMenu: {
     prayerBook: "Libro de oración",
@@ -92,6 +96,7 @@ export default {
     text: "Texto",
     done: "Listo",
     save: "Guardar",
+    noPrayers: "No hay notas guardadas."
   },
   boneliv: {
     delete: "Eliminar",
@@ -101,7 +106,7 @@ export default {
     seconds: "Segundos:",
     noSavedPrayerTimes: "No hay tiempos de oración guardados todavía.",
     time: "Tiempo",
-    duration: "Duración",
+    duration: "Duración",  // Añadido "Varaktighet" (Duration)
     totalCount: "Total" 
   },
   chat: {
@@ -196,5 +201,22 @@ export default {
       "sat": "Sáb"
     },
     "today": "Hoy"
+  },
+
+  rewards: {
+    headerTitle: "🏆 Sistema de Recompensas",
+    allTime: "Tiempo total",
+    pointsInfo: "(30 minutos = 1 punto)",
+    totalPoints: "Puntos totales",
+    currentLevel: "Nivel actual",
+    unlocked: "Desbloqueados",
+    thresholdsTitle: "Umbrales de nivel (7 niveles, puntos acumulados)",
+    level: "Nivel",
+    points: "puntos",
+    pts: "pts",
+    progress: "Progreso",
+    of: "de",
+    locked: "Bloqueado",
+    back: "Atrás"
   }
 };

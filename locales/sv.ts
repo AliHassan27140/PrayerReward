@@ -19,18 +19,18 @@ export default {
     writeReview: "Skriv en recension",
     about: "OM",
     aboutApp: "Om Appen Haye",
-    privacy: "Dataintegritet",
+    privacy: "Integritetspolicy",
     terms: "Användarvillkor",
     logout: "Logga ut",
     languageChangedTitle: "Språk ändrat",
     languageChangedMessage: "Appens språk är nu {{language}}",
     errorChangingLanguage: "Kunde inte ändra språk, försök igen.",
-    madeWithLove: "Gjort med ❤️ av Hayyeapp",
+    madeWithLove: "Gjort med ❤️ av Hayyeapp"
   },
   auth: {
     login: "Logga in",
     registerAccount: "Registrera konto",
-    emailPlaceholder: "E‑post",
+    emailPlaceholder: "E-post",
     passwordPlaceholder: "Lösenord",
     loggingIn: "Loggar in…",
     creatingAccount: "Skapar konto…",
@@ -46,22 +46,24 @@ export default {
     requestSentDescription: "En återställningslänk har skickats till din e-postadress. Följ instruktionerna för att återställa ditt lösenord.",
     closeButton: "Stäng",
     errors: {
-      fillEmailPassword: "Fyll i både e‑post och lösenord",
-      userNotFound: "Kunde inte hitta något konto med den e‑posten",
+      fillEmailPassword: "Fyll i både e-post och lösenord",
+      userNotFound: "Kunde inte hitta något konto med den e-posten",
       wrongPassword: "Fel lösenord",
-      emailInUse: "E‑postadressen används redan",
-      invalidEmail: "Ogiltig e‑postadress",
+      emailInUse: "E-postadressen används redan",
+      invalidEmail: "Ogiltig e-postadress",
       weakPassword: "Lösenordet är för svagt (minst 6 tecken)",
       enterEmailForReset: "Vänligen ange din e-postadress för återställning",
-      resetFailed: "Något gick fel. Kontrollera din e-postadress.",
+      resetFailed: "Något gick fel. Kontrollera din e-postadress."
     }
   },
   home: {
+    title2: "Matteusevangeliet 7:7",
+    title3: "Be, så skall ni få.",
     title: "Bönestund",
     start: "Starta",
     stop: "Stoppa",
     yourPrayerToday: "Din bönestund idag",
-    time: "Tid",
+    time: "Varaktighetstid",
     save: "Spara",
     restart: "Börja om",
     cancel: "Avbryt",
@@ -74,7 +76,9 @@ export default {
     seconds: "Sekunder",
     infoButton: "Info",
     errorNotLoggedIn: "Användaren är inte inloggad",
-    saving: "Sparar..."
+    saving: "Sparar...",
+    enterTime: "Ange tid",  // Här har du den saknade översättningen
+    duration: "Varaktighet"  // Nytt tillägg
   },
   rootMenu: {
     prayerBook: "Bönbok",
@@ -93,6 +97,7 @@ export default {
     text: "Text",
     done: "Klar",
     save: "Spara",
+    noPrayers: "Inga sparade anteckningar."
   },
   boneliv: {
     delete: "Radera",
@@ -102,8 +107,8 @@ export default {
     seconds: "Sekunder",
     noSavedPrayerTimes: "Inga sparade bönestunder",
     time: "Tid",
-    duration: "Varaktighet",
-    totalCount: "Antal"  // Added this line for the "count" translation
+    duration: "Varaktighet",  // Nytt tillägg
+    totalCount: "Antal"
   },
   chat: {
     title: "Frågor & Svar",
@@ -152,8 +157,8 @@ export default {
   "Date:": "Datum:",
   calendar: {
     "months": {
-      "january": "Januari",
-      "february": "Februari",
+      "januari": "Januari",
+      "februari": "Februari",
       "march": "Mars",
       "april": "April",
       "may": "Maj",
@@ -198,5 +203,21 @@ export default {
       "sat": "Lör"
     },
     "today": "Idag"
+  },
+  rewards: {
+    headerTitle: "🏆 Belöningssystem",
+    allTime: "Totalt",
+    pointsInfo: "(30 minuter = 1 poäng)",
+    totalPoints: "Totala poäng",
+    currentLevel: "Nuvarande nivå",
+    unlocked: "Upplåsta",
+    thresholdsTitle: "Nivågränser (7 nivåer, kumulativa poäng)",
+    level: "Nivå",
+    points: "poäng",
+    pts: "p",
+    progress: "Framsteg",
+    of: "av",
+    locked: "Låst",
+    back: "Tillbaka"
   }
 };

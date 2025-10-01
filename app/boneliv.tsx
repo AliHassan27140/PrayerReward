@@ -1,23 +1,26 @@
 import { Picker } from '@react-native-picker/picker';
-import { collection, deleteDoc, doc, onSnapshot, orderBy, query } from 'firebase/firestore';
+import { collection, deleteDoc, doc, onSnapshot, orderBy, query, updateDoc, Timestamp } from 'firebase/firestore';
 import React, { useEffect, useState } from 'react';
-import { ActivityIndicator, Alert, FlatList, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { ActivityIndicator, FlatList, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { GestureHandlerRootView, Swipeable } from 'react-native-gesture-handler';
 import { useRouter } from 'expo-router';
 import { auth, firestore } from '../components/firebaseConfig';
 import { useRewardSystem } from '../hooks/useRewardSystem';
 import i18n from '../locales/i18n';
+import PrayerTypeModal from './PrayerTypeModal'; // Import PrayerTypeModal component
+import LevelUpRewardPopup from './LevelUpRewardPopup'; // Import LevelUpRewardPopup component
 
 interface SavedTime {
   date: string;
   durationInSeconds: number;
   durationFormatted: string;
   id: string;
+  prayerType?: string;
+  prayerSavedAt: any; // This should be Timestamp from Firestore
 }
 
 type Props = {};
 
-/** Säker översättningshjälpare som aldrig visar "missing ..." */
 const t = (key: string, defaultValue = '') => {
   const val = i18n.t(key, { defaultValue });
   if (typeof val === 'string' && val.toLowerCase().startsWith('missing ')) return defaultValue;
@@ -60,32 +63,15 @@ export default function BoneLivScreen({}: Props) {
 
   const [showYearPicker, setShowYearPicker] = useState<boolean>(false);
   const [showMonthPicker, setShowMonthPicker] = useState<boolean>(false);
-
+  const [selectedPrayerType, setSelectedPrayerType] = useState<string | null>(null);
+  const [isPopupVisible, setIsPopupVisible] = useState<boolean>(false);
+  const [selectedPrayerId, setSelectedPrayerId] = useState<string | null>(null);
+  const [newPrayerType, setNewPrayerType] = useState<string>('');
+  const [availablePrayerTypes, setAvailablePrayerTypes] = useState<string[]>(['Godmorgon', 'Godnatt']);
+  const [loadingCreate, setLoadingCreate] = useState<boolean>(false);  // New loading state for creating prayer type
+  
   useEffect(() => {
-    if (hasLevelUp) {
-      const timer = setTimeout(() => {
-        Alert.alert(
-          t('boneliv.rewardUnlocked', 'You have unlocked a new reward'),
-          t('boneliv.goThere', 'Go there now?'),
-          [
-            {
-              text: t('boneliv.cancel', 'Cancel'),
-              style: 'cancel',
-              onPress: () => clearLevelUpNotification()
-            },
-            {
-              text: t('boneliv.goThere', 'Go there'),
-              onPress: async () => {
-                await clearLevelUpNotification();
-                router.push('/rewards');
-              }
-            }
-          ]
-        );
-      }, 500);
-
-      return () => clearTimeout(timer);
-    }
+    // Removed old Alert for reward notification
   }, [hasLevelUp, clearLevelUpNotification, router]);
 
   const getMonthNumber = (month: string): string => {
@@ -101,7 +87,20 @@ export default function BoneLivScreen({}: Props) {
         await deleteDoc(docRef);
       }
     } catch {
-      // Svälj fel här om du inte vill logga i konsolen
+      // Swallow error if you don't want to log it in the console
+    }
+  };
+
+  const updatePrayerType = async (id: string, prayerType: string) => {
+    const userId = auth.currentUser?.uid;
+    if (userId) {
+      try {
+        const docRef = doc(firestore, 'users', userId, 'prayerTimes', id);
+        await updateDoc(docRef, { prayerType });
+        setSelectedPrayerType(null); // Clear global selection after updating
+      } catch (error) {
+        console.error('Error updating prayer type:', error);
+      }
     }
   };
 
@@ -161,30 +160,78 @@ export default function BoneLivScreen({}: Props) {
     </View>
   );
 
-  const renderSavedTimes = ({ item }: { item: SavedTime }) => (
-    <Swipeable renderRightActions={() => renderRightActions(item.id)} friction={2} rightThreshold={80} overshootRight={false}>
-      <View style={styles.cardOuter}>
-        <View style={styles.cardAccent} />
-        <View style={styles.cardInner}>
-          <View style={styles.cardHeaderRow}>
-            <Text style={styles.cardTitle}>
-              {t('date.label', 'Datum')}: {item.date}
-            </Text>
-            <View style={styles.badge}>
-              <Text style={styles.badgeText}>{t('boneliv.time', 'Tid')}</Text>
+  const renderSavedTimes = ({ item }: { item: SavedTime }) => {
+    const savedTime = item.prayerSavedAt instanceof Timestamp
+      ? item.prayerSavedAt.toDate()
+      : new Date(item.prayerSavedAt);
+    const formattedSavedTime = savedTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+
+    return (
+      <Swipeable renderRightActions={() => renderRightActions(item.id)} friction={2} rightThreshold={80} overshootRight={false}>
+        <View style={styles.cardOuter}>
+          <View style={styles.cardAccent} />
+          <View style={styles.cardInner}>
+            <View style={styles.cardHeaderRow}>
+              <Text style={styles.cardTitle}>
+                {t('date.label', 'Datum')}: {item.date}
+              </Text>
+              <View style={styles.timeContainer}>
+                <TouchableOpacity onPress={() => handlePrayerTypePopup(item.id)} style={styles.timeTouchable}>
+                  <Text style={styles.plusButton}>+</Text>
+                  <Text style={styles.prayerTypeText}>{item.prayerType || 'Lägg till böneämne'}</Text>
+                </TouchableOpacity>
+              </View>
+            </View>
+
+            <View style={styles.hairline} />
+
+            <View style={styles.cardContentRow}>
+              <Text style={styles.cardLabel}>{t('boneliv.duration', 'Varaktighet')}</Text>
+              <Text style={styles.cardValue}>{item.durationFormatted}</Text>
+            </View>
+
+            <View style={styles.separatorLine} />
+
+            <View style={styles.cardContentRow}>
+              <Text style={styles.cardLabel}>Tid Sparad</Text>
+              <Text style={styles.cardValue}>{formattedSavedTime}</Text>
             </View>
           </View>
-
-          <View style={styles.hairline} />
-
-          <View style={styles.cardContentRow}>
-            <Text style={styles.cardLabel}>{t('boneliv.duration', 'Varaktighet')}</Text>
-            <Text style={styles.cardValue}>{item.durationFormatted}</Text>
-          </View>
         </View>
-      </View>
-    </Swipeable>
-  );
+      </Swipeable>
+    );
+  };
+
+  const handlePrayerTypePopup = (id: string) => {
+    setSelectedPrayerId(id);
+    setIsPopupVisible(true);
+  };
+
+  const handleSelectPrayerType = (type: string) => {
+    if (selectedPrayerId) {
+      updatePrayerType(selectedPrayerId, type);
+    }
+    setIsPopupVisible(false);
+  };
+
+  const handleCreatePrayerType = async () => {
+    if (newPrayerType.trim()) {
+      setLoadingCreate(true);
+
+      try {
+        if (selectedPrayerId) {
+          await updatePrayerType(selectedPrayerId, newPrayerType);
+        }
+        setAvailablePrayerTypes(prev => [...prev, newPrayerType]);
+        setNewPrayerType('');
+        setIsPopupVisible(false);
+      } catch (error) {
+        console.error('Error creating prayer type:', error);
+      } finally {
+        setLoadingCreate(false);
+      }
+    }
+  };
 
   const hours = Math.floor(totalTime / 3600);
   const minutes = Math.floor((totalTime % 3600) / 60);
@@ -257,40 +304,52 @@ export default function BoneLivScreen({}: Props) {
             data={savedTimes}
             renderItem={renderSavedTimes}
             keyExtractor={(item) => item.id}
-            contentContainerStyle={styles.listContent}
+            contentContainerStyle={{
+              paddingTop: 16,
+              paddingBottom: 150,
+              flexGrow: 1,
+            }}
             ItemSeparatorComponent={() => <View style={{ height: 8 }} />}
           />
         ) : (
           <Text style={styles.noDataText}>{t('boneliv.noSavedPrayerTimes', 'Inga sparade bönestunder')}</Text>
         )}
       </View>
+
+      {/* PrayerTypeModal Popup */}
+      <PrayerTypeModal
+        visible={isPopupVisible}
+        onClose={() => setIsPopupVisible(false)}
+        onCreatePrayerType={handleCreatePrayerType}
+        onSelectPrayerType={handleSelectPrayerType}
+        availablePrayerTypes={availablePrayerTypes}
+        loadingCreate={loadingCreate}
+        newPrayerType={newPrayerType}
+        setNewPrayerType={setNewPrayerType}
+      />
+
+      {/* LevelUpRewardPopup */}
+      {hasLevelUp && (
+        <LevelUpRewardPopup
+          onLevelUp={async () => {
+            await clearLevelUpNotification();
+            router.push('/rewards');
+          }}
+          onCancel={clearLevelUpNotification}
+          t={t}
+        />
+      )}
     </GestureHandlerRootView>
   );
 }
 
-/* ---- STYLES: exakt som du ville behålla ---- */
-const COLORS = {
-  bg: '#4A235A',
-  card: '#FAF6FF',
-  ink: '#3D1D47',
-  accent: '#9B59B6',
-  accentDark: '#6C3483',
-  danger: '#E74C3C',
-  inkMuted: '#6E5975',
-  hair: 'rgba(0,0,0,0.1)',
-};
-
-const RADIUS = 14;
-
 const styles = StyleSheet.create({
-  /* ===== Layout ===== */
   container: {
     flex: 1,
-    backgroundColor: COLORS.bg,
-    paddingTop: 65,
+    backgroundColor: '#4A235A',
+    paddingTop: 15,
     paddingHorizontal: 16,
   },
-
   title: {
     fontSize: 18,
     fontWeight: '700',
@@ -299,11 +358,9 @@ const styles = StyleSheet.create({
     marginBottom: 12,
     letterSpacing: 0.3,
   },
-
-  /* ===== Summary card ===== */
   summaryCard: {
-    backgroundColor: COLORS.card,
-    borderRadius: RADIUS,
+    backgroundColor: '#FAF6FF',
+    borderRadius: 14,
     padding: 14,
     flexDirection: 'row',
     alignItems: 'center',
@@ -320,39 +377,37 @@ const styles = StyleSheet.create({
   },
   summaryLabel: {
     fontSize: 12,
-    color: COLORS.inkMuted,
+    color: '#6E5975',
     fontWeight: '700',
     marginBottom: 4,
   },
   summaryValue: {
     fontSize: 20,
-    color: COLORS.ink,
+    color: '#3D1D47',
     fontWeight: '800',
   },
   vDivider: {
     width: 1,
     height: 36,
-    backgroundColor: COLORS.hair,
+    backgroundColor: 'rgba(0,0,0,0.1)',
     marginHorizontal: 6,
   },
-
-  /* ===== Filter chips ===== */
   selectContainer: {
     flexDirection: 'row',
     justifyContent: 'center',
     gap: 10,
     marginTop: 14,
-    marginBottom: 6,
+    marginBottom: 14,
   },
   pickerChip: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: COLORS.card,
+    backgroundColor: '#FAF6FF',
     paddingVertical: 8,
     paddingHorizontal: 12,
     borderRadius: 999,
     borderWidth: 1,
-    borderColor: COLORS.accent,
+    borderColor: '#9B59B6',
     gap: 6,
     shadowColor: '#000',
     shadowOpacity: 0.08,
@@ -363,29 +418,27 @@ const styles = StyleSheet.create({
   pickerChipText: {
     fontSize: 14,
     fontWeight: '700',
-    color: COLORS.ink,
+    color: '#3D1D47',
   },
-  chev: { fontSize: 14, color: COLORS.accentDark },
-
+  chev: {
+    fontSize: 14,
+    color: '#6C3483',
+  },
   picker: {
     width: '100%',
     alignSelf: 'center',
-    backgroundColor: COLORS.card,
-    borderRadius: RADIUS,
+    backgroundColor: '#FAF6FF',
+    borderRadius: 14,
     marginTop: 8,
     marginBottom: 12,
   },
-
-  /* ===== List ===== */
   listContent: {
     paddingVertical: 12,
   },
-
-  /* Kort med vänster accent-streck och hårfin divider */
   cardOuter: {
     flexDirection: 'row',
-    backgroundColor: COLORS.card,
-    borderRadius: RADIUS,
+    backgroundColor: '#FAF6FF',
+    borderRadius: 14,
     overflow: 'hidden',
     shadowColor: '#000',
     shadowOpacity: 0.12,
@@ -395,7 +448,7 @@ const styles = StyleSheet.create({
   },
   cardAccent: {
     width: 6,
-    backgroundColor: COLORS.accent,
+    backgroundColor: '#9B59B6',
   },
   cardInner: {
     flex: 1,
@@ -409,7 +462,7 @@ const styles = StyleSheet.create({
   cardTitle: {
     fontSize: 15,
     fontWeight: '800',
-    color: COLORS.ink,
+    color: '#3D1D47',
   },
   badge: {
     backgroundColor: '#EFE6F7',
@@ -417,16 +470,16 @@ const styles = StyleSheet.create({
     paddingHorizontal: 8,
     borderRadius: 999,
     borderWidth: 1,
-    borderColor: COLORS.accent,
+    borderColor: '#9B59B6',
   },
   badgeText: {
     fontSize: 11,
     fontWeight: '700',
-    color: COLORS.accentDark,
+    color: '#6C3483',
   },
   hairline: {
     height: 1,
-    backgroundColor: COLORS.hair,
+    backgroundColor: 'rgba(0,0,0,0.1)',
     marginVertical: 8,
   },
   cardContentRow: {
@@ -435,39 +488,34 @@ const styles = StyleSheet.create({
   },
   cardLabel: {
     fontSize: 13,
-    color: COLORS.inkMuted,
+    color: '#6E5975',
     fontWeight: '700',
   },
   cardValue: {
     fontSize: 15,
-    color: COLORS.ink,
+    color: '#3D1D47',
     fontWeight: '800',
   },
-
-  /* ===== Swipe actions ===== */
   rightActionContainer: {
-    width: 90, // större yta vid swipe
+    width: 90,
     height: '100%',
     justifyContent: 'center',
     alignItems: 'center',
   },
   deleteButton: {
-    backgroundColor: COLORS.danger,
-    width: '100%', // fyller hela container-bredden
+    backgroundColor: '#E74C3C',
+    width: '100%',
     height: '100%',
     borderRadius: 12,
     justifyContent: 'center',
     alignItems: 'center',
   },
-
   deleteText: {
     color: '#FFFFFF',
     fontWeight: '800',
     fontSize: 14,
     letterSpacing: 0.3,
   },
-
-  /* ===== Övrigt ===== */
   noDataText: {
     fontSize: 16,
     textAlign: 'center',
@@ -483,5 +531,114 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     backgroundColor: 'rgba(0,0,0,0.1)',
+  },
+  plusButton: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#9B59B6',
+    marginLeft: 10,
+  },
+  prayerTypeText: {
+    fontSize: 14,
+    color: '#6E5975',
+    marginLeft: 5,
+    fontStyle: 'italic',
+  },
+  timeContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  timeTouchable: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6, // Space between the "+" button and the prayer type text
+  },
+  modalBackdrop: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+  },
+  modalContainer: {
+    width: 320, // Larger width
+    backgroundColor: '#ffffff', // Clean white background
+    borderRadius: 20, // More rounded corners
+    padding: 24, // Increased padding for better spacing
+    alignItems: 'center',
+    justifyContent: 'center',
+    shadowColor: '#000',
+    shadowOpacity: 0.2, // Softer shadow
+    shadowRadius: 25, // Larger radius for smoother shadow
+    shadowOffset: { width: 0, height: 10 },
+    elevation: 8, // Slightly lower elevation for a more subtle effect
+    marginHorizontal: 30, // Margin from left and right
+    marginTop: 50, // Margin from the top
+  },
+  modalTitle: {
+    fontSize: 18,
+    fontWeight: '700',
+    color: '#3D1D47',
+    marginBottom: 10,
+  },
+  modalMessage: {
+    fontSize: 14,
+    color: '#6E5975',
+    marginBottom: 20,
+    textAlign: 'center',
+  },
+  buttonContainer: {
+    width: '100%',
+    alignItems: 'center',
+  },
+  button: {
+    width: '100%',
+    paddingVertical: 12,
+    marginBottom: 10,
+    borderRadius: 12,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  primaryButton: {
+    backgroundColor: '#9B59B6',
+  },
+  secondaryButton: {
+    backgroundColor: '#6C3483',
+  },
+  cancelButton: {
+    backgroundColor: '#E74C3C',
+  },
+  buttonText: {
+    color: '#FFFFFF',
+    fontWeight: '700',
+  },
+  createButton: {
+    backgroundColor: '#27AE60', // Green button for creating new prayer type
+  },
+  textInput: {
+    width: '100%',
+    padding: 10,
+    marginBottom: 12,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: '#9B59B6',
+    backgroundColor: '#FAF6FF',
+    fontSize: 14,
+    color: '#3D1D47',
+  },
+  characterCountContainer: {
+    width: '100%',
+    alignItems: 'flex-end', // Align the text to the right
+    marginBottom: 5, // Space between the count and input
+  },
+
+  characterCount: {
+    fontSize: 12,
+    color: '#6E5975',
+    textAlign: 'right',
+  },
+  separatorLine: {
+    height: 1,
+    backgroundColor: 'rgba(0,0,0,0.1)', // Light gray color for separator
+    marginVertical: 10, // Add margin to separate sections
   },
 });

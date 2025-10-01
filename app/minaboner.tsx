@@ -5,9 +5,12 @@ import {
   deleteDoc,
   doc,
   DocumentData,
-  getDocs,
+  query,
+  where,
+  onSnapshot,
   updateDoc
 } from 'firebase/firestore';
+import { getAuth } from 'firebase/auth';
 import React, { useEffect, useLayoutEffect, useMemo, useRef, useState, useCallback } from 'react';
 import {
   ActivityIndicator,
@@ -20,7 +23,9 @@ import {
   TextInput,
   TouchableOpacity,
   TouchableWithoutFeedback,
-  View
+  View,
+  KeyboardAvoidingView,
+  Platform
 } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import { GestureHandlerRootView, Swipeable } from 'react-native-gesture-handler';
@@ -36,6 +41,8 @@ type Prayer = {
 
 export default function HomeScreen() {
   const navigation = useNavigation();
+  const auth = getAuth(); // För att hämta aktuell användare (UID)
+  const userId = auth.currentUser?.uid; // Få användarens UID
 
   const titleInputRef = useRef<TextInput>(null);
   const prayerTextInputRef = useRef<TextInput>(null);
@@ -44,19 +51,14 @@ export default function HomeScreen() {
   const NAVBAR_HEIGHT = 120;
 
   const [confirmationModalVisible, setConfirmationModalVisible] = useState(false);
-
   const [title, setTitle] = useState('');
   const [prayerText, setPrayerText] = useState('');
-
   const [savedPrayers, setSavedPrayers] = useState<Prayer[]>([]);
   const [selectedPrayerIndex, setSelectedPrayerIndex] = useState<number | null>(null);
   const [activePrayer, setActivePrayer] = useState<Prayer | null>(null); // null = listläge
-
   const [isSaving, setIsSaving] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
-
-  // NYTT: styr om "Klar" är klickbar
   const [isTyping, setIsTyping] = useState(false);
 
   const isCreating = !!activePrayer && activePrayer.id === ''; // ny anteckning som inte är sparad än
@@ -72,10 +74,17 @@ export default function HomeScreen() {
   }, [activePrayer, navigation]);
 
   useEffect(() => {
-    const loadPrayers = async () => {
-      setIsLoading(true);
-      try {
-        const querySnapshot = await getDocs(collection(firestore, 'prayers'));
+    if (!userId) return; // Om ingen användare är inloggad, hämta inte anteckningar
+
+    // Filtrera anteckningar per användare
+    const prayersQuery = query(
+      collection(firestore, 'prayers'),
+      where('userId', '==', userId) // Endast anteckningar för den aktuella användaren
+    );
+
+    const unsubscribe = onSnapshot(
+      prayersQuery,
+      (querySnapshot) => {
         const prayersData = querySnapshot.docs.map((d) => {
           const data = d.data() as DocumentData;
           return {
@@ -87,25 +96,26 @@ export default function HomeScreen() {
         });
         prayersData.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
         setSavedPrayers(prayersData);
-      } catch (error) {
+        setIsLoading(false);
+      },
+      (error) => {
         console.error('Error getting prayers: ', error);
-      } finally {
         setIsLoading(false);
       }
+    );
+
+    // Avsluta prenumerationen när komponenten tas bort
+    return () => unsubscribe();
+  }, [userId]);
+
+  useEffect(() => {
+    const showSub = Keyboard.addListener('keyboardWillShow', () => setIsTyping(true));
+    const hideSub = Keyboard.addListener('keyboardWillHide', () => setIsTyping(false));
+    return () => {
+      showSub.remove();
+      hideSub.remove();
     };
-    loadPrayers();
   }, []);
-
-  // NYTT: lyssna på tangentbordets visning/gömning
-useEffect(() => {
-  const showSub = Keyboard.addListener('keyboardWillShow', () => setIsTyping(true));
-  const hideSub = Keyboard.addListener('keyboardWillHide', () => setIsTyping(false));
-  return () => {
-    showSub.remove();
-    hideSub.remove();
-  };
-}, []);
-
 
   const openPrayerDetails = (prayer: Prayer, index: number) => {
     setActivePrayer(prayer);
@@ -114,7 +124,6 @@ useEffect(() => {
     setPrayerText(prayer.prayerText ?? '');
   };
 
-  // + öppnar TOM detaljvy – inga skrivningar förrän Spara
   const startCreateNew = () => {
     const draft: Prayer = {
       id: '', // markerar "ny"
@@ -133,64 +142,83 @@ useEffect(() => {
     Keyboard.dismiss();
   };
 
-  const saveActive = useCallback(async () => {
-    if (!activePrayer) return;
+ const saveActive = useCallback(async () => {
+  if (!activePrayer || !userId) return;
 
-    if (isCreating && (!title.trim() || !prayerText.trim())) {
-      alert(i18n.t('minaboner.fillAll') || 'Titel och bönetext måste fyllas i innan du sparar!');
-      return;
-    }
+  if (isCreating && (!title.trim() || !prayerText.trim())) {
+    alert(i18n.t('minaboner.fillAll') || 'Titel och bönetext måste fyllas i innan du sparar!');
+    return;
+  }
 
-    if (!isCreating && !isDirty) return;
+  if (!isCreating && !isDirty) return;  // Om vi inte har ändrat något, ingen anledning att spara
 
-    try {
-      setIsSaving(true);
-      const currentDate = new Date().toISOString();
+  try {
+    setIsSaving(true);
+    const currentDate = new Date().toISOString();
 
-      if (isCreating) {
-        const newDoc = await addDoc(collection(firestore, 'prayers'), {
-          title: title.trim(),
-          prayerText: prayerText.trim(),
-          date: currentDate,
-        });
-        const newPrayer: Prayer = {
-          id: newDoc.id,
-          title: title.trim(),
-          prayerText: prayerText.trim(),
-          date: currentDate,
-        };
-        setSavedPrayers(prev => [newPrayer, ...prev]);
-        setActivePrayer(newPrayer);
-        setSelectedPrayerIndex(0);
-      } else {
-        await updateDoc(doc(firestore, 'prayers', activePrayer.id), {
-          title: title ?? '',
-          prayerText: prayerText ?? '',
-          date: currentDate,
-        });
-
-        const updatedPrayer: Prayer = {
-          ...activePrayer,
-          title: title ?? '',
-          prayerText: prayerText ?? '',
-          date: currentDate,
-        };
-
-        const newList = savedPrayers.filter(p => p.id !== activePrayer.id);
-        newList.unshift(updatedPrayer);
-        setSavedPrayers(newList);
-
-        setActivePrayer(updatedPrayer);
-        setSelectedPrayerIndex(0);
+    if (isCreating) {
+      // Kontrollera om anteckningen redan finns (om samma titel finns)
+      const existingPrayer = savedPrayers.find(prayer => prayer.title === title.trim());
+      if (existingPrayer) {
+        alert(i18n.t('minaboner.alreadyExists') || 'Den här anteckningen finns redan!');
+        setIsSaving(false);
+        return;
       }
-    } catch (e) {
-      console.error('Error saving prayer: ', e);
-    } finally {
-      setIsSaving(false);
-    }
-  }, [activePrayer, isCreating, isDirty, title, prayerText, savedPrayers]);
 
-  // Radera från LISTAN (swipe), utan modal
+      // Skapa en ny anteckning om den inte finns
+      const newDoc = await addDoc(collection(firestore, 'prayers'), {
+        title: title.trim(),
+        prayerText: prayerText.trim(),
+        date: currentDate,
+        userId: userId // Lägg till användarens ID för att koppla anteckningen till användaren
+      });
+
+      const newPrayer: Prayer = {
+        id: newDoc.id,
+        title: title.trim(),
+        prayerText: prayerText.trim(),
+        date: currentDate,
+      };
+
+      // Uppdatera listan korrekt för att undvika dubbletter
+      setSavedPrayers(prev => {
+        const newPrayersList = prev.filter(p => p.id !== newPrayer.id); // Ta bort befintliga med samma ID (om någon)
+        return [newPrayer, ...newPrayersList]; // Lägg till den nya anteckningen i listan
+      });
+
+      setActivePrayer(newPrayer);
+      setSelectedPrayerIndex(0);
+    } else {
+      // Uppdatera befintlig anteckning om vi inte är i skaparläge
+      await updateDoc(doc(firestore, 'prayers', activePrayer.id), {
+        title: title ?? '',
+        prayerText: prayerText ?? '',
+        date: currentDate,
+      });
+
+      const updatedPrayer: Prayer = {
+        ...activePrayer,
+        title: title ?? '',
+        prayerText: prayerText ?? '',
+        date: currentDate,
+      };
+
+      setSavedPrayers(prev => {
+        const newList = prev.filter(p => p.id !== activePrayer.id); // Ta bort den gamla versionen
+        return [updatedPrayer, ...newList]; // Lägg till den uppdaterade anteckningen i listan
+      });
+
+      setActivePrayer(updatedPrayer);
+      setSelectedPrayerIndex(0);
+    }
+  } catch (e) {
+    console.error('Error saving prayer: ', e);
+  } finally {
+    setIsSaving(false);
+  }
+}, [activePrayer, isCreating, isDirty, title, prayerText, savedPrayers, userId]);
+
+
   const deletePrayerById = useCallback(async (id: string) => {
     try {
       await deleteDoc(doc(firestore, 'prayers', id));
@@ -200,7 +228,6 @@ useEffect(() => {
     }
   }, []);
 
-  // Radera från DETALJVY (med modal)
   const handleDelete = async () => {
     if (!activePrayer || activePrayer.id === '') {
       setConfirmationModalVisible(false);
@@ -227,7 +254,6 @@ useEffect(() => {
     );
   }, [savedPrayers, searchQuery]);
 
-  /** Swipe-actions: röd "Ta bort" som fyller radens höjd, ingen ikon */
   const renderRightActions = (id: string) => (
     <View style={styles.rightActionContainer}>
       <TouchableOpacity style={styles.deleteButton} onPress={() => deletePrayerById(id)}>
@@ -280,55 +306,67 @@ useEffect(() => {
                 style={styles.prayersList}
                 contentContainerStyle={{
                   paddingTop: TOPBAR_HEIGHT + 10,
-                  paddingBottom: NAVBAR_HEIGHT + 20,
+                  paddingBottom: NAVBAR_HEIGHT + -5,
                 }}
                 keyboardShouldPersistTaps="handled"
               >
-                {filteredPrayers.map((prayer, index) => (
-                  <Swipeable
-                    key={prayer.id}
-                    renderRightActions={() => renderRightActions(prayer.id)}
-                    friction={2}
-                    rightThreshold={80}
-                    overshootRight={false}
-                  >
-                    <View style={styles.cardOuter}>
-                      <View style={styles.cardAccent} />
-                      <TouchableOpacity
-                        style={styles.cardInner}
-                        onPress={() => openPrayerDetails(prayer, index)}
-                        activeOpacity={0.9}
-                      >
-                        <View style={styles.cardHeaderRow}>
-                          <Text style={styles.prayerTitle} numberOfLines={1}>
-                            {prayer.title}
-                          </Text>
-                          <View style={styles.badge}>
-                            <Text style={styles.badgeText}>
-                              {new Date(prayer.date).toLocaleDateString('sv-SE')}
-                            </Text>
-                          </View>
-                        </View>
-
-                        <View style={styles.hairline} />
-
-                        <Text
-                          style={styles.prayerText}
-                          numberOfLines={2}
-                          ellipsizeMode="tail"
+                {filteredPrayers.length === 0 ? (
+                  <View style={styles.noPrayersContainer}>
+                    <Text style={styles.noPrayersText}>
+                      {i18n.t('minaboner.noPrayers') || 'Inga sparade anteckningar'}
+                    </Text>
+                  </View>
+                ) : (
+                  filteredPrayers.map((prayer, index) => (
+                    <Swipeable
+                      key={prayer.id}
+                      renderRightActions={() => renderRightActions(prayer.id)}
+                      friction={2}
+                      rightThreshold={80}
+                      overshootRight={false}
+                    >
+                      <View style={styles.cardOuter}>
+                        <View style={styles.cardAccent} />
+                        <TouchableOpacity
+                          style={styles.cardInner}
+                          onPress={() => openPrayerDetails(prayer, index)}
+                          activeOpacity={0.9}
                         >
-                          {prayer.prayerText}
-                        </Text>
-                      </TouchableOpacity>
-                    </View>
-                  </Swipeable>
-                ))}
+                          <View style={styles.cardHeaderRow}>
+                            <Text style={styles.prayerTitle} numberOfLines={1}>
+                              {prayer.title}
+                            </Text>
+                            <View style={styles.badge}>
+                              <Text style={styles.badgeText}>
+                                {new Date(prayer.date).toLocaleDateString('sv-SE')}
+                              </Text>
+                            </View>
+                          </View>
+
+                          <View style={styles.hairline} />
+
+                          <Text
+                            style={styles.prayerText}
+                            numberOfLines={2}
+                            ellipsizeMode="tail"
+                          >
+                            {prayer.prayerText}
+                          </Text>
+                        </TouchableOpacity>
+                      </View>
+                    </Swipeable>
+                  ))
+                )}
               </ScrollView>
             )}
 
             {/* Detaljvy – direktredigerbar */}
             {activePrayer && (
-              <>
+              <KeyboardAvoidingView
+                style={{ flex: 1 }}
+                behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+                keyboardVerticalOffset={Platform.OS === 'ios' ? 60 : 0}
+              >
                 <View style={styles.backButtonContainer}>
                   <TouchableOpacity style={styles.backButton} onPress={closePrayer}>
                     <Text style={styles.backArrow}>←</Text>
@@ -370,8 +408,9 @@ useEffect(() => {
                 <View style={styles.detailWrapper}>
                   <ScrollView
                     style={{ flex: 1, paddingTop: TOPBAR_HEIGHT + 10 }}
-                    contentContainerStyle={{ paddingBottom: 40 }}
+                    contentContainerStyle={{ paddingBottom: 120 }}
                     keyboardShouldPersistTaps="handled"
+                    showsVerticalScrollIndicator={false}
                   >
                     <View style={styles.detailContent}>
                       {/* DATUM ÖVER TITELN */}
@@ -396,17 +435,18 @@ useEffect(() => {
 
                       <TextInput
                         ref={prayerTextInputRef}
-                        style={[styles.detailText, { minHeight: 200, textAlignVertical: 'top' }]}
+                        style={[styles.detailText, { minHeight: 200, maxHeight: 240, textAlignVertical: 'top' }]}
                         value={prayerText}
                         onChangeText={setPrayerText}
                         placeholder={i18n.t('minaboner.text')}
                         placeholderTextColor="#8E66A6"
                         multiline
+                        scrollEnabled={true}
                       />
                     </View>
                   </ScrollView>
                 </View>
-              </>
+              </KeyboardAvoidingView>
             )}
           </View>
         </TouchableWithoutFeedback>
@@ -443,6 +483,9 @@ useEffect(() => {
     </GestureHandlerRootView>
   );
 }
+
+/* STYLES SOM VANLIGT */
+
 
 /* ====== DESIGNKONSTANTER ====== */
 const COLORS = {
@@ -782,4 +825,15 @@ const styles = StyleSheet.create({
     fontSize: 12,
     textAlign: 'center',
   },
+  noPrayersContainer: {
+  flex: 1,
+  justifyContent: 'center',
+  alignItems: 'center',
+  marginTop: 20,
+},
+noPrayersText: {
+  fontSize: 16,
+   color: '#E5D8EF',
+  textAlign: 'center',
+},
 });

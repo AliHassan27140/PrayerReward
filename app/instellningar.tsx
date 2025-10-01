@@ -101,26 +101,28 @@ const SettingsScreen = ({ onLogout }: Props) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    padding: 20,
+    paddingTop: 0,
+    paddingHorizontal: 20,
     backgroundColor: '#522f60ff',
   },
   sectionTitle: {
     fontSize: 16,
     fontWeight: '500',
     color: '#F5E6D9',
-    marginVertical: 10,
+    marginVertical: 5,
   },
   menuContainer: {
-    paddingTop: 10,
-    paddingBottom: 100, // Added padding bottom to ensure space for the footer
-  },
+  paddingTop: 0,
+  paddingBottom: 140, // Ökat utrymme för att säkerställa att knapparna är synliga
+},
+
   menuItem: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingVertical: 15,
-    paddingHorizontal: 10,
-    marginBottom: 10,
-    borderRadius: 8,
+    paddingVertical: 14, // Liten ökning av padding för flikarna
+    paddingHorizontal: 14, // Liten ökning av padding för flikarna
+    marginBottom: 12,
+    borderRadius: 12, // Liten ökning för rundade hörn
     backgroundColor: '#6a4b8d',
     shadowColor: '#000000',
     shadowOffset: { width: 0, height: 2 },
@@ -128,28 +130,28 @@ const styles = StyleSheet.create({
     shadowRadius: 5,
   },
   menuText: {
-    fontSize: 16,
+    fontSize: 17, // Liten ökning i textstorlek för bättre synlighet
     marginLeft: 15,
     color: '#F5E6D9',
   },
   footer: {
-    marginTop: 30,
+    marginTop: 5,
     alignItems: 'center',
     paddingTop: 20,
     paddingBottom: 20,
   },
   footerContent: {
-    flexDirection: 'row', // Makes the text and icon align horizontally
+    flexDirection: 'row',
     alignItems: 'center',
   },
   footerText: {
     fontSize: 15,
     color: '#F5E6D9',
     textAlign: 'center',
-    marginRight: 10, // Adds space between text and icon
+    marginRight: 10,
   },
   icon: {
-    marginLeft: -4, // Adds some space between text and icon
+    marginLeft: -4,
   },
   socialLinks: {
     flexDirection: 'row',
@@ -163,9 +165,9 @@ const styles = StyleSheet.create({
     justifyContent: 'space-around',
   },
   languageOption: {
-    paddingVertical: 12,
-    paddingHorizontal: 25,
-    borderRadius: 25,
+    paddingVertical: 16, // Liten ökning av padding för flikarna
+    paddingHorizontal: 28, // Liten ökning av padding för flikarna
+    borderRadius: 25, // Behåller samma rundade hörn
     backgroundColor: '#7a5cae88',
     borderWidth: 1,
     borderColor: 'transparent',
@@ -179,7 +181,7 @@ const styles = StyleSheet.create({
     shadowRadius: 6,
   },
   languageText: {
-    fontSize: 16,
+    fontSize: 17, // Liten ökning i textstorlek
     color: '#f5e6d9',
     fontWeight: '600',
   },
@@ -187,11 +189,11 @@ const styles = StyleSheet.create({
     color: '#522f60',
   },
   changeLanguageBtn: {
-    marginTop: 15,
+    marginTop: 5,
     backgroundColor: '#a98eee',
     borderRadius: 25,
-    paddingVertical: 12,
-    paddingHorizontal: 35,
+    paddingVertical: 16, // Liten ökning för att göra knappen större
+    paddingHorizontal: 45, // Liten ökning för att göra knappen större
     alignSelf: 'center',
     shadowColor: '#f5e6d9',
     shadowOffset: { width: 0, height: 2 },
@@ -199,7 +201,7 @@ const styles = StyleSheet.create({
     shadowRadius: 5,
   },
   changeLanguageBtnText: {
-    fontSize: 16,
+    fontSize: 17, // Liten ökning i textstorlek
     fontWeight: '700',
     color: '#522f60',
     textAlign: 'center',
@@ -207,3 +209,4 @@ const styles = StyleSheet.create({
 });
 
 export default SettingsScreen;
+

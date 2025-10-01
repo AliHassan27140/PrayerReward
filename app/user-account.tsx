@@ -4,7 +4,7 @@ import { StackNavigationProp } from '@react-navigation/stack';
 import { useRouter } from 'expo-router';
 import { sendPasswordResetEmail } from 'firebase/auth';
 import React, { useEffect, useState } from 'react';
-import { Alert, Button, Modal, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import { Alert, Modal, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View, Button } from 'react-native';
 import { auth } from '../components/firebaseConfig';
 
 type RootStackParamList = {
@@ -28,6 +28,7 @@ const UserAccountScreen = () => {
   const [email, setEmail] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [requestSentModalVisible, setRequestSentModalVisible] = useState(false);
+  const [deletionSuccessModalVisible, setDeletionSuccessModalVisible] = useState(false);
 
   useEffect(() => {
     const user = auth.currentUser;
@@ -68,11 +69,7 @@ const UserAccountScreen = () => {
     if (user && emailInput === user.email) {
       user.delete()
         .then(() => {
-          Alert.alert(
-            'Kontot raderat!',
-            'Ditt konto och all din data har raderats permanent. Du kommer inte att kunna återställa denna information.'
-          );
-          navigation.navigate('Index');
+          setDeletionSuccessModalVisible(true); // Show the success modal
         })
         .catch((error) => {
           Alert.alert('Fel', 'Det gick inte att radera kontot: ' + error.message);
@@ -90,12 +87,13 @@ const UserAccountScreen = () => {
 
   return (
     <View style={[styles.container, { backgroundColor: '#522f60ff' }]}>
-      {/* Back Button */}
-      <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
-        <Ionicons name="arrow-back" size={30} color="#FFF" />
-      </TouchableOpacity>
-
-      <Text style={styles.header}>Användarkonto</Text>
+      {/* Back Button and Header Together */}
+      <View style={styles.headerContainer}>
+        <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
+          <Ionicons name="arrow-back" size={30} color="#FFF" />
+        </TouchableOpacity>
+        <Text style={styles.header}>Användarkonto</Text>
+      </View>
 
       <ScrollView contentContainerStyle={styles.menuContainer}>
         {/* User Info Section */}
@@ -122,70 +120,246 @@ const UserAccountScreen = () => {
           <Ionicons name="trash-outline" size={24} color="#F5E6D9" />
           <Text style={styles.menuText}>Radera konto</Text>
         </TouchableOpacity>
+      </ScrollView>
 
-        {/* Modal for Password Reset */}
-        <Modal
-          transparent={true}
-          animationType="fade"
-          visible={resetPasswordModalVisible}
-          onRequestClose={() => setResetPasswordModalVisible(false)}
-        >
-          <View style={styles.modalOverlay}>
-            <View style={styles.modalContainer}>
-              <Text style={styles.modalTitle}>Återställ lösenord</Text>
-              <TextInput
-                style={styles.input}
-                placeholder="Din e‑postadress"
-                keyboardType="email-address"
-                value={email}
-                onChangeText={setEmail}
-              />
-              {error && <Text style={styles.error}>{error}</Text>}
-              <Button title="Skicka länk för återställning" onPress={handlePasswordReset} />
-              <TouchableOpacity onPress={() => setResetPasswordModalVisible(false)} style={styles.closeModalButton}>
-                <Text style={styles.closeModalButtonText}>Stäng</Text>
+      {/* Modal for Password Reset */}
+      <Modal
+        transparent={true}
+        animationType="fade"
+        visible={resetPasswordModalVisible}
+        onRequestClose={() => setResetPasswordModalVisible(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContainer}>
+            <Text style={styles.modalTitle}>Återställ lösenord</Text>
+
+            {/* icke-redigerbar TextInput */}
+            <TextInput
+              style={styles.emailInput}
+              value={email}
+              editable={false}  // Gör fältet icke-redigerbart
+              selectTextOnFocus={false}  // Hindrar text från att markeras vid fokus
+            />
+
+            {error && <Text style={styles.error}>{error}</Text>}
+            <TouchableOpacity style={styles.primaryButton} onPress={handlePasswordReset}>
+              <Text style={styles.buttonText}>Skicka länk för återställning</Text>
+            </TouchableOpacity>
+            <TouchableOpacity onPress={() => setResetPasswordModalVisible(false)} style={styles.closeModalButton}>
+              <Text style={styles.closeModalButtonText}>Stäng</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
+
+      {/* Modal for request sent confirmation */}
+      <Modal
+        transparent={true}
+        animationType="fade"
+        visible={requestSentModalVisible}
+        onRequestClose={() => setRequestSentModalVisible(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContainer}>
+            <Text style={styles.modalTitle}>Återställningskod skickad</Text>
+            <Text style={styles.successMessage}>En återställningslänk har skickats till din e-postadress.</Text>
+            <TouchableOpacity onPress={() => setRequestSentModalVisible(false)} style={styles.closeModalButton}>
+              <Text style={styles.closeModalButtonText}>Stäng</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
+
+      {/* Modal for Account Deletion Success */}
+      <Modal
+        transparent={true}
+        animationType="fade"
+        visible={deletionSuccessModalVisible}
+        onRequestClose={() => setDeletionSuccessModalVisible(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContainer}>
+            <Text style={styles.modalTitle}>Raderingen lyckades!</Text>
+            <Text style={styles.successMessage}>Ditt konto och all din data har raderats permanent.</Text>
+            <TouchableOpacity
+              onPress={() => {
+                setDeletionSuccessModalVisible(false);
+                router.replace('/');  // Navigate to login screen
+              }}
+              style={styles.closeModalButton}
+            >
+              <Text style={styles.closeModalButtonText}>Stäng</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
+
+      {/* Modal for Confirming Account Deletion */}
+      <Modal
+        animationType="slide"
+        transparent={true}
+        visible={isModalVisible}
+        onRequestClose={() => setIsModalVisible(false)}
+      >
+        <View style={{
+          flex: 1,
+          justifyContent: 'center',
+          alignItems: 'center',
+          backgroundColor: 'rgba(0, 0, 0, 0.7)',
+        }}>
+          <View style={{
+            backgroundColor: '#FFF',
+            padding: 25,
+            borderRadius: 20,
+            width: 320,
+            justifyContent: 'center',
+            alignItems: 'center',
+            shadowColor: '#000',
+            shadowOffset: { width: 0, height: 6 },
+            shadowOpacity: 0.1,
+            shadowRadius: 12,
+            elevation: 8,
+          }}>
+            <Text style={{
+              fontSize: 24,
+              fontWeight: '700',
+              color: '#9B59B6',
+              marginBottom: 25,
+              textAlign: 'center',
+            }}>
+              Bekräfta Radering
+            </Text>
+
+            <TextInput
+              style={{
+                height: 55,
+                borderColor: '#9B59B6',
+                borderWidth: 1.5,
+                borderRadius: 12,
+                paddingHorizontal: 15,
+                marginBottom: 25,
+                backgroundColor: '#F5F5F5',
+                color: '#34495E',
+                fontSize: 16,
+                textAlign: 'center',
+              }}
+              placeholder="Bekräfta din e-postadress"
+              value={emailInput}
+              onChangeText={setEmailInput}
+              autoCapitalize="none"
+            />
+
+            <Text style={{
+              fontSize: 16,
+              color: '#E74C3C',
+              textAlign: 'center',
+              fontWeight: '600',
+              marginBottom: 10,
+            }}>
+              All din data kommer att raderas permanent, inklusive:
+            </Text>
+            
+            <Text style={{
+              fontSize: 16,
+              color: '#34495E',
+              marginLeft: 0,
+              marginBottom: 7,
+              textAlign: 'left',
+            }}>
+              • Böner
+            </Text>
+            <Text style={{
+              fontSize: 16,
+              color: '#34495E',
+              marginLeft: 0,
+              marginBottom: 7,
+              textAlign: 'left',
+            }}>
+              • Böner tider
+            </Text>
+            <Text style={{
+              fontSize: 16,
+              color: '#34495E',
+              marginLeft: 0,
+              marginBottom: 7,
+              textAlign: 'left',
+            }}>
+              • Personlig information
+            </Text>
+            <Text style={{
+              fontSize: 16,
+              color: '#34495E',
+              marginLeft: 0,
+              marginBottom: 7,
+              textAlign: 'left',
+            }}>
+              • All annan sparad data
+            </Text>
+
+            <Text style={{
+              fontSize: 16,
+              color: '#E74C3C',
+              textAlign: 'center',
+              fontWeight: '600',
+              marginBottom: 20,
+            }}>
+              Det går inte att återställa någon av dessa uppgifter.
+            </Text>
+
+            <View style={{
+              flexDirection: 'row',
+              justifyContent: 'space-between',
+              width: '85%',
+              marginTop: 25,
+            }}>
+              <TouchableOpacity 
+                onPress={() => setIsModalVisible(false)} 
+                style={{
+                  backgroundColor: '#717578ff',
+                  paddingVertical: 10,
+                  paddingHorizontal: 20,
+                  borderRadius: 8,
+                  width: '45%',
+                  justifyContent: 'center',
+                  alignItems: 'center',
+                }}
+              >
+                <Text style={{
+                  color: '#FFF',
+                  fontWeight: '600',
+                  fontSize: 16,
+                  textAlign: 'center',
+                }}>
+                  Avbryt
+                </Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity 
+                onPress={confirmDeleteAccount} 
+                style={{
+                  backgroundColor: emailInput === userData.email ? '#d9000bff' : '#cc8a8eff', // Change color when disabled
+                  paddingVertical: 10,
+                  paddingHorizontal: 20,
+                  borderRadius: 8,
+                  width: '45%',
+                  justifyContent: 'center',
+                  alignItems: 'center',
+                }}
+                disabled={emailInput !== userData.email} // Disable the button if email doesn't match
+              >
+                <Text style={{
+                  color: '#FFF',
+                  fontWeight: '600',
+                  fontSize: 16,
+                  textAlign: 'center',
+                }}>
+                  Radera konto
+                </Text>
               </TouchableOpacity>
             </View>
           </View>
-        </Modal>
-
-        {/* Modal for Confirming Account Deletion */}
-        <Modal
-          animationType="slide"
-          transparent={true}
-          visible={isModalVisible}
-          onRequestClose={() => setIsModalVisible(false)}
-        >
-          <View style={styles.modalOverlay}>
-            <View style={styles.modalContainer}>
-              <Text style={styles.modalTitle}>Bekräfta Radering</Text>
-              <TextInput
-                style={styles.input}
-                placeholder="Skriv din e-postadress för att bekräfta"
-                value={emailInput}
-                onChangeText={setEmailInput}
-                autoCapitalize="none"
-              />
-              <Text style={styles.warningText}>
-                All din data kommer att raderas permanent, inklusive:
-              </Text>
-              <Text style={styles.bulletPoint}>• Böner</Text>
-              <Text style={styles.bulletPoint}>• Böner tider</Text>
-              <Text style={styles.bulletPoint}>• Personlig information</Text>
-              <Text style={styles.bulletPoint}>• All annan sparad data</Text>
-              <Text style={styles.warningText}>Det går inte att återställa någon av dessa uppgifter.</Text>
-              <View style={styles.modalButtonsContainer}>
-                <TouchableOpacity onPress={() => setIsModalVisible(false)} style={styles.cancelButton}>
-                  <Text style={styles.buttonText}>Avbryt</Text>
-                </TouchableOpacity>
-                <TouchableOpacity onPress={confirmDeleteAccount} style={styles.deleteButtonModal}>
-                  <Text style={styles.buttonText}>Radera konto</Text>
-                </TouchableOpacity>
-              </View>
-            </View>
-          </View>
-        </Modal>
-      </ScrollView>
+        </View>
+      </Modal>
 
       {/* Footer Section */}
       <View style={styles.footer}>
@@ -201,14 +375,24 @@ const UserAccountScreen = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    padding: 20,
+    paddingHorizontal: 20,
+  },
+  headerContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: 20,
+    marginBottom: 20,
+    justifyContent: 'center',
+  },
+  backButton: {
+    position: 'absolute',
+    left: 0,
+    zIndex: 10,
   },
   header: {
     fontSize: 22,
     fontWeight: '600',
     color: '#F5E6D9',
-    marginTop: 56,
-    marginBottom: 20,
     textAlign: 'center',
   },
   sectionTitle: {
@@ -257,9 +441,18 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     gap: 20,
   },
+  primaryButton: {
+    backgroundColor: '#9B59B6',
+    paddingVertical: 12,
+    paddingHorizontal: 30,
+    borderRadius: 8,
+    marginTop: -5,
+  },
   buttonText: {
     color: '#FFF',
     fontWeight: 'bold',
+    fontSize: 16,
+    textAlign: 'center',
   },
   cancelButton: {
     backgroundColor: '#ccc',
@@ -273,55 +466,44 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     borderRadius: 5,
   },
-
-  // Back Button Styles
-  backButton: {
-    position: 'absolute',
-    top: 69, 
-    left: 20, 
-    zIndex: 20, 
-    backgroundColor: '#9B59B6', 
-    borderRadius: 50, 
-    width: 52,  
-    height: 52, 
-    justifyContent: 'center', 
-    alignItems: 'center', 
-    padding: 0,  
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.2,
-    shadowRadius: 5,
-  },
-
-  // Modal Styles
   modalOverlay: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: 'rgba(0, 0, 0, 0.5)', 
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
   },
   modalContainer: {
     backgroundColor: '#FFF',
     padding: 20,
-    borderRadius: 10,
+    borderRadius: 15,
     width: 320,
     justifyContent: 'center',
     alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.15,
+    shadowRadius: 10,
   },
   modalTitle: {
     fontSize: 22,
     fontWeight: '600',
-    marginBottom: 10,
+    marginBottom: 20,
     color: '#9B59B6',
   },
-  modalDescription: {
+  emailInput: {
+    height: 50,
+    borderColor: '#9B59B6',
+    borderWidth: 1,
+    borderRadius: 10,
+    paddingHorizontal: 12,
+    marginBottom: 20,
+    backgroundColor: '#F5F5F5',
+    color: '#34495E',
     fontSize: 16,
     textAlign: 'center',
-    marginBottom: 20,
-    color: '#34495E',
   },
   input: {
-    height: 48,
+    height: 50,
     borderColor: '#F5E6D9',
     borderWidth: 1,
     borderRadius: 8,
@@ -339,8 +521,15 @@ const styles = StyleSheet.create({
     marginTop: 10,
   },
   closeModalButtonText: {
-    color: '#9B59B6',
+    color: '#717578ff',
     fontWeight: '600',
+    marginTop: 30,
+  },
+  successMessage: {
+    fontSize: 16,
+    color: '#28A745',
+    textAlign: 'center',
+    marginBottom: 20,
   },
   warningText: {
     fontSize: 16,
