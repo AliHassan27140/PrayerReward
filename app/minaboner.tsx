@@ -46,6 +46,7 @@ export default function HomeScreen() {
 
   const titleInputRef = useRef<TextInput>(null);
   const prayerTextInputRef = useRef<TextInput>(null);
+  const scrollViewRef = useRef<ScrollView>(null);
 
   const TOPBAR_HEIGHT = 70;
   const NAVBAR_HEIGHT = 120;
@@ -60,6 +61,7 @@ export default function HomeScreen() {
   const [isLoading, setIsLoading] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [isTyping, setIsTyping] = useState(false);
+  const [isScrolling, setIsScrolling] = useState(false);
 
   const isCreating = !!activePrayer && activePrayer.id === ''; // ny anteckning som inte är sparad än
   const isDirty =
@@ -365,7 +367,8 @@ export default function HomeScreen() {
               <KeyboardAvoidingView
                 style={{ flex: 1 }}
                 behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-                keyboardVerticalOffset={Platform.OS === 'ios' ? 60 : 0}
+                keyboardVerticalOffset={Platform.OS === 'ios' ? 100 : 20}
+                enabled={true}
               >
                 <View style={styles.backButtonContainer}>
                   <TouchableOpacity style={styles.backButton} onPress={closePrayer}>
@@ -407,10 +410,19 @@ export default function HomeScreen() {
 
                 <View style={styles.detailWrapper}>
                   <ScrollView
+                    ref={scrollViewRef}
                     style={{ flex: 1, paddingTop: TOPBAR_HEIGHT + 10 }}
-                    contentContainerStyle={{ paddingBottom: 120 }}
-                    keyboardShouldPersistTaps="handled"
+                    contentContainerStyle={{ paddingBottom: Platform.OS === 'ios' ? 400 : 200, flexGrow: 1 }}
+                    keyboardShouldPersistTaps="always"
+                    keyboardDismissMode="on-drag"
                     showsVerticalScrollIndicator={false}
+                    automaticallyAdjustKeyboardInsets={Platform.OS === 'ios'}
+                    automaticallyAdjustContentInsets={false}
+                    scrollEventThrottle={16}
+                    onScrollBeginDrag={() => setIsScrolling(true)}
+                    onScrollEndDrag={() => setIsScrolling(false)}
+                    onMomentumScrollBegin={() => setIsScrolling(true)}
+                    onMomentumScrollEnd={() => setIsScrolling(false)}
                   >
                     <View style={styles.detailContent}>
                       {/* DATUM ÖVER TITELN */}
@@ -429,19 +441,28 @@ export default function HomeScreen() {
                         placeholderTextColor="#8E66A6"
                         multiline
                         returnKeyType="done"
+                        onFocus={() => setIsTyping(true)}
+                        onBlur={() => setIsTyping(false)}
+                        pointerEvents={isScrolling ? 'none' : 'auto'}
+                        editable={!isScrolling}
                       />
 
                       <View style={styles.hairlineWide} />
 
                       <TextInput
                         ref={prayerTextInputRef}
-                        style={[styles.detailText, { minHeight: 200, maxHeight: 240, textAlignVertical: 'top' }]}
+                        style={[styles.detailText, { minHeight: 200, textAlignVertical: 'top' }]}
                         value={prayerText}
                         onChangeText={setPrayerText}
                         placeholder={i18n.t('minaboner.text')}
                         placeholderTextColor="#8E66A6"
                         multiline
-                        scrollEnabled={true}
+                        scrollEnabled={false}
+                        onFocus={() => setIsTyping(true)}
+                        onBlur={() => setIsTyping(false)}
+                        textAlignVertical="top"
+                        pointerEvents={isScrolling ? 'none' : 'auto'}
+                        editable={!isScrolling}
                       />
                     </View>
                   </ScrollView>
