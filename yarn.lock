@@ -2766,6 +2766,11 @@
   dependencies:
     merge-options "^3.0.4"
 
+"@react-native-community/blur@^4.4.1":
+  version "4.4.1"
+  resolved "https://registry.yarnpkg.com/@react-native-community/blur/-/blur-4.4.1.tgz#72cbc0be5a84022c33091683ec6888925ebcca6e"
+  integrity sha512-XBSsRiYxE/MOEln2ayunShfJtWztHwUxLFcSL20o+HNNRnuUDv+GXkF6FmM2zE8ZUfrnhQ/zeTqvnuDPGw6O8A==
+
 "@react-native-community/cli-clean@20.0.2":
   version "20.0.2"
   resolved "https://registry.npmjs.org/@react-native-community/cli-clean/-/cli-clean-20.0.2.tgz"
@@ -8945,6 +8950,13 @@ react-native-google-mobile-ads@^15.4.0:
     "@iabtcf/core" "^1.5.3"
     use-deep-compare-effect "^1.8.1"
 
+react-native-highlight-overlay@^1.4.0:
+  version "1.4.0"
+  resolved "https://registry.yarnpkg.com/react-native-highlight-overlay/-/react-native-highlight-overlay-1.4.0.tgz#04f04bfc54abaa12465218d68b7cdf63eb1ddddc"
+  integrity sha512-4wXR79QXMzZCUOY02pSCCgp73KzZYsITJR0XbheYP4XoBMLXUJcw+Br2Aie05QYqNjXz2iMYiekmE3T9jqzQGg==
+  dependencies:
+    lodash.isequal "^4.5.0"
+
 react-native-is-edge-to-edge@1.1.7:
   version "1.1.7"
   resolved "https://registry.npmjs.org/react-native-is-edge-to-edge/-/react-native-is-edge-to-edge-1.1.7.tgz"
@@ -8969,7 +8981,7 @@ react-native-modal-datetime-picker@^18.0.0:
 
 react-native-modal@^14.0.0-rc.1:
   version "14.0.0-rc.1"
-  resolved "https://registry.npmjs.org/react-native-modal/-/react-native-modal-14.0.0-rc.1.tgz"
+  resolved "https://registry.yarnpkg.com/react-native-modal/-/react-native-modal-14.0.0-rc.1.tgz#d193af884c910ec34a4953508c7656b5fc83d7d4"
   integrity sha512-v5pvGyx1FlmBzdHyPqBsYQyS2mIJhVmuXyNo5EarIzxicKhuoul6XasXMviGcXboEUT0dTYWs88/VendojPiVw==
   dependencies:
     react-native-animatable "1.4.0"

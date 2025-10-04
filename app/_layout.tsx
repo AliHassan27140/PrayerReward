@@ -6,6 +6,7 @@ import { ActivityIndicator, Animated, StyleSheet, View, Text, Pressable, Platfor
 import { languageEvents } from '../hooks/languageEvents';
 import i18n, { initI18n, setAppLanguage } from "../locales/i18n";
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
+import { BlurOverlayProvider } from '../contexts/BlurOverlayContext';
 
 const TOP_VISUAL_HEIGHT = 100; // höjden under statusbar
 
@@ -275,7 +276,8 @@ Tips: Slå på påminnelser för att hålla rytmen levande.`
   const topHeaderHeight = insets.top + (TOP_VISUAL_HEIGHT - 50); 
 
   return (
-    <View style={styles.container} key={reloadKey}>
+    <BlurOverlayProvider>
+      <View style={styles.container} key={reloadKey}>
       {/* 1) Måla hela safe area-toppen (kant till kant, inkl “öron”) */}
       {shouldShowMenu && (
         <SafeAreaView style={styles.topEdgeBg} edges={['top']} />
@@ -398,7 +400,8 @@ Tips: Slå på påminnelser för att hålla rytmen levande.`
           </Pressable>
         </Pressable>
       </Modal>
-    </View>
+      </View>
+    </BlurOverlayProvider>
   );
 }
 

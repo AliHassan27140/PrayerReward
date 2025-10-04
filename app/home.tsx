@@ -10,6 +10,7 @@ import Icon from 'react-native-vector-icons/FontAwesome'; // Import FontAwesome
 import { useRewardSystem } from '../hooks/useRewardSystem';
 import ManualInputModal from './ManualInputModal'; // Adjust the path as needed
 import SupportModal from './SupportModal'; // Adjust the path as needed
+import { useBlurOverlay } from '../contexts/BlurOverlayContext';
 
 export default function HomeScreen() {
   const router = useRouter();
@@ -23,6 +24,7 @@ export default function HomeScreen() {
   const [isSaving, setIsSaving] = useState(false);
   
   const { totalPoints, currentLevel, unlockedLevels, hasLevelUp, clearLevelUpNotification } = useRewardSystem();
+  const { showBlurOverlay, hideBlurOverlay } = useBlurOverlay();
 
   const [supportModalVisible, setSupportModalVisible] = useState<boolean>(false);
   const [manualDate, setManualDate] = useState<string>('');
@@ -157,15 +159,26 @@ export default function HomeScreen() {
     if (isRunning) {
       clearInterval(intervalId);
       setIntervalId(null);
+      hideBlurOverlay();
       setModalVisible(true);
     } else {
       const id = setInterval(() => {
         setTimer(prev => prev + 1);
       }, 1000);
       setIntervalId(id);
+      showBlurOverlay(); // Just show the blur background, no content
     }
     setIsRunning(!isRunning);
   };
+
+  // Show/hide blur when timer state changes
+  useEffect(() => {
+    if (isRunning) {
+      showBlurOverlay(); // Just the blur background
+    } else {
+      hideBlurOverlay();
+    }
+  }, [isRunning]);
 
   const formatTime = (time: number) => {
     const hours = Math.floor(time / 3600);
@@ -273,10 +286,6 @@ export default function HomeScreen() {
 
   return (
     <View style={styles.container}>
-      {/* Dark overlay when timer is running */}
-      {isRunning && (
-        <View style={styles.darkOverlay} />
-      )}
       <TouchableOpacity
         style={[styles.lightningIconContainer, isRunning && styles.disabledButton]}
         onPress={async () => {
@@ -294,32 +303,34 @@ export default function HomeScreen() {
         </Animated.View>
       </TouchableOpacity>
 
-      <Text style={[styles.title, isRunning && styles.dimmedElement]}>
-        <Text style={styles.boldText}>{i18n.t('home.title2')}</Text>
-        {"\n"}
-        <Text style={styles.smallItalicText}>{i18n.t('home.title3')}</Text>
-      </Text>
+      <View style={[styles.timerContainer, isRunning && styles.floatingTimer]}>
+        <Text style={styles.title}>
+          <Text style={styles.boldText}>{i18n.t('home.title2')}</Text>
+          {"\n"}
+          <Text style={styles.smallItalicText}>{i18n.t('home.title3')}</Text>
+        </Text>
 
-      <Text style={styles.timerText}>{formatTime(timer)}</Text>
+        <Text style={styles.timerText}>{formatTime(timer)}</Text>
 
-      <TouchableOpacity
-        style={styles.button}
-        onPress={toggleTimer}
-        onPressIn={onPressIn}
-        onPressOut={onPressOut}
-      >
-        <Animated.View
-          style={[
-            styles.buttonInner,
-            {
-              transform: [{ scale: scaleValue }],
-              shadowOffset: shadowOffset,
-            },
-          ]}
+        <TouchableOpacity
+          style={styles.button}
+          onPress={toggleTimer}
+          onPressIn={onPressIn}
+          onPressOut={onPressOut}
         >
-          <Text style={styles.buttonText}>{isRunning ? i18n.t('home.stop') : i18n.t('home.start')}</Text>
-        </Animated.View>
-      </TouchableOpacity>
+          <Animated.View
+            style={[
+              styles.buttonInner,
+              {
+                transform: [{ scale: scaleValue }],
+                shadowOffset: shadowOffset,
+              },
+            ]}
+          >
+            <Text style={styles.buttonText}>{isRunning ? i18n.t('home.stop') : i18n.t('home.start')}</Text>
+          </Animated.View>
+        </TouchableOpacity>
+      </View>
 
       <Modal
         animationType="fade"
@@ -428,6 +439,14 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     backgroundColor: '#4A235A',
+  },
+  timerContainer: {
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  floatingTimer: {
+    zIndex: 1000, // High z-index to float above blur overlay
+    elevation: 1000, // For Android
   },
   lightningIconContainer: {
     position: 'absolute',
