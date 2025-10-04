@@ -36,22 +36,32 @@ const ManualInputModal: React.FC<ManualInputModalProps> = ({
 }) => {
   const [manualHoursInput, setManualHoursInput] = useState<string>(manualHours);
   const [manualMinutesInput, setManualMinutesInput] = useState<string>(manualMinutes);
-  const [manualSecondsInput, setManualSecondsInput] = useState<string>(manualSeconds);
   const [showTimeInput, setShowTimeInput] = useState<boolean>(false);
   const [showDuration, setShowDuration] = useState<boolean>(false);
   
-  // Default time is "__ : __"
+  // Separate states for manual time and duration
   const [selectedTime, setSelectedTime] = useState<string>("__ : __");
   const [selectedDuration, setSelectedDuration] = useState<string>("__ : __ : __");
+  
+  // Separate states to track which method was used
+  const [isManualTimeSet, setIsManualTimeSet] = useState<boolean>(false);
+  const [isDurationSet, setIsDurationSet] = useState<boolean>(false);
+  
+  // Duration-specific state variables  
+  const [durationHours, setDurationHours] = useState<string>('0');
+  const [durationMinutes, setDurationMinutes] = useState<string>('0');
+  const [durationSecondsState, setDurationSecondsState] = useState<string>('0');
 
-  // Check if any time has been entered
+  // Check if any time has been entered (either manual time or duration)
   const hasTimeEntered = () => {
-    return (manualHoursInput && manualHoursInput !== '') || 
-           (manualMinutesInput && manualMinutesInput !== '') || 
-           (manualSecondsInput && manualSecondsInput !== '') ||
-           (manualHours && manualHours !== '') ||
-           (manualMinutes && manualMinutes !== '') ||
-           (manualSeconds && manualSeconds !== '');
+    const hasManualTime = (manualHoursInput && manualHoursInput !== '') || 
+                         (manualMinutesInput && manualMinutesInput !== '');
+    
+    const hasDuration = (durationHours && durationHours !== '0') ||
+                       (durationMinutes && durationMinutes !== '0') ||
+                       (durationSecondsState && durationSecondsState !== '0');
+    
+    return hasManualTime || hasDuration;
   };
 
   // Function to get today's date in the format YYYY-MM-DD
@@ -63,12 +73,31 @@ const ManualInputModal: React.FC<ManualInputModalProps> = ({
   useEffect(() => {
     if (visible) {
       setManualDate(getTodayDate());
+      // Reset states when modal opens
+      setSelectedTime("__ : __");
+      setSelectedDuration("__ : __ : __");
+      setIsManualTimeSet(false);
+      setIsDurationSet(false);
+      setManualHoursInput('');
+      setManualMinutesInput('');
+      setDurationHours('0');
+      setDurationMinutes('0');
+      setDurationSecondsState('0');
     }
   }, [visible, setManualDate]);
 
   // Handle hours, minutes, and seconds input change
   const handleHoursChange = (hours: string) => {
     if (hours.length <= 2 && /^[0-9]*$/.test(hours)) {
+      // Reset duration if user starts entering manual time
+      if (isDurationSet) {
+        setDurationHours('0');
+        setDurationMinutes('0');
+        setDurationSecondsState('0');
+        setSelectedDuration("__ : __ : __");
+        setIsDurationSet(false);
+      }
+      
       setManualHoursInput(hours);
       setManualHours(hours);
     }
@@ -76,26 +105,38 @@ const ManualInputModal: React.FC<ManualInputModalProps> = ({
 
   const handleMinutesChange = (minutes: string) => {
     if (minutes.length <= 2 && /^[0-9]*$/.test(minutes)) {
+      // Reset duration if user starts entering manual time
+      if (isDurationSet) {
+        setDurationHours('0');
+        setDurationMinutes('0');
+        setDurationSecondsState('0');
+        setSelectedDuration("__ : __ : __");
+        setIsDurationSet(false);
+      }
+      
       setManualMinutesInput(minutes);
       setManualMinutes(minutes);
     }
   };
 
-  const handleSecondsChange = (seconds: string) => {
-    if (seconds.length <= 2 && /^[0-9]*$/.test(seconds)) {
-      setManualSecondsInput(seconds);
-      setManualSeconds(seconds);
-    }
+
+  // Function to update duration display
+  const updateDurationDisplay = (hours: string, minutes: string, seconds: string) => {
+    const displayHours = hours || "__";
+    const displayMinutes = minutes || "__";
+    const displaySeconds = seconds || "__";
+    setSelectedDuration(`${displayHours} : ${displayMinutes} : ${displaySeconds}`);
   };
 
-  // Function to dismiss the keyboard when "Klar" is pressed
+  // Function to dismiss the keyboard when "Done" is pressed (only affects manual time)
   const handleDone = () => {
     const displayHours = manualHoursInput || "__";
     const displayMinutes = manualMinutesInput || "__";
-    const displaySeconds = manualSecondsInput || "__";
     
-    setSelectedTime(`${displayHours} : ${displayMinutes}`); // Update selected time
-    setSelectedDuration(`${displayHours} : ${displayMinutes} : ${displaySeconds}`); // Update selected duration
+    setSelectedTime(`${displayHours} : ${displayMinutes}`); // Update only selected time
+    setIsManualTimeSet(true); // Mark that manual time was set
+    setIsDurationSet(false); // Reset duration flag since user chose manual time
+    
     Keyboard.dismiss(); // Dismiss the keyboard
     setShowTimeInput(false); // Hide the time input fields
   };
@@ -195,9 +236,14 @@ const ManualInputModal: React.FC<ManualInputModalProps> = ({
               setShowDuration(!showDuration); // Toggle visibility of duration input
               if (showTimeInput) setShowTimeInput(false); // Close time input if it's open
             }} style={styles.showDurationButton}>
-              <Text style={styles.showDurationButtonText}>
-                {i18n.t('home.duration')}
-              </Text>
+              <View style={styles.buttonContent}>
+                <Text style={styles.showDurationButtonText}>
+                  {i18n.t('home.duration')}
+                </Text>
+                <Text style={styles.selectedTimeText}>
+                  {selectedDuration}
+                </Text>
+              </View>
               <View style={styles.iconContainer}>
                 <AntDesign 
                   name={showDuration ? 'up' : 'down'} 
@@ -214,8 +260,21 @@ const ManualInputModal: React.FC<ManualInputModalProps> = ({
                 <View style={styles.timeInput}>
                   <Text style={styles.timeLabel}>{i18n.t('home.hours')}</Text>
                   <Picker
-                    selectedValue={manualHours}
-                    onValueChange={(itemValue) => setManualHours(itemValue.toString())}
+                    selectedValue={durationHours}
+                    onValueChange={(itemValue) => {
+                      // Reset manual time if user starts selecting duration
+                      if (isManualTimeSet) {
+                        setManualHoursInput('');
+                        setManualMinutesInput('');
+                        setSelectedTime("__ : __");
+                        setIsManualTimeSet(false);
+                      }
+                      
+                      setDurationHours(itemValue.toString());
+                      setManualHours(itemValue.toString()); // Update parent state immediately
+                      setIsDurationSet(true);
+                      updateDurationDisplay(itemValue.toString(), durationMinutes, durationSecondsState);
+                    }}
                     style={styles.timePicker}
                     itemStyle={{ color: '#fff' }}
                   >
@@ -228,8 +287,21 @@ const ManualInputModal: React.FC<ManualInputModalProps> = ({
                 <View style={styles.timeInput}>
                   <Text style={styles.timeLabel}>{i18n.t('home.minutes')}</Text>
                   <Picker
-                    selectedValue={manualMinutes}
-                    onValueChange={(itemValue) => setManualMinutes(itemValue.toString())}
+                    selectedValue={durationMinutes}
+                    onValueChange={(itemValue) => {
+                      // Reset manual time if user starts selecting duration
+                      if (isManualTimeSet) {
+                        setManualHoursInput('');
+                        setManualMinutesInput('');
+                        setSelectedTime("__ : __");
+                        setIsManualTimeSet(false);
+                      }
+                      
+                      setDurationMinutes(itemValue.toString());
+                      setManualMinutes(itemValue.toString()); // Update parent state immediately
+                      setIsDurationSet(true);
+                      updateDurationDisplay(durationHours, itemValue.toString(), durationSecondsState);
+                    }}
                     style={styles.timePicker}
                     itemStyle={{ color: '#fff' }}
                   >
@@ -242,8 +314,21 @@ const ManualInputModal: React.FC<ManualInputModalProps> = ({
                 <View style={styles.timeInput}>
                   <Text style={styles.timeLabel}>{i18n.t('home.seconds')}</Text>
                   <Picker
-                    selectedValue={manualSeconds}
-                    onValueChange={(itemValue) => setManualSeconds(itemValue.toString())}
+                    selectedValue={durationSecondsState}
+                    onValueChange={(itemValue) => {
+                      // Reset manual time if user starts selecting duration
+                      if (isManualTimeSet) {
+                        setManualHoursInput('');
+                        setManualMinutesInput('');
+                        setSelectedTime("__ : __");
+                        setIsManualTimeSet(false);
+                      }
+                      
+                      setDurationSecondsState(itemValue.toString());
+                      setManualSeconds(itemValue.toString()); // Update parent state immediately
+                      setIsDurationSet(true);
+                      updateDurationDisplay(durationHours, durationMinutes, itemValue.toString());
+                    }}
                     style={styles.timePicker}
                     itemStyle={{ color: '#fff' }}
                   >
@@ -259,7 +344,10 @@ const ManualInputModal: React.FC<ManualInputModalProps> = ({
             <View style={styles.modalButtonContainer}>
               <TouchableOpacity
                 style={[styles.modalButton, (!hasTimeEntered() || isSaving) && styles.disabledButton]}
-                onPress={onSave}
+                onPress={() => {
+                  // Parent state is already updated in real-time by the input handlers
+                  onSave();
+                }}
                 disabled={isSaving || !hasTimeEntered()}
               >
                 {isSaving ? (
