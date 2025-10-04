@@ -62,6 +62,7 @@ export default function HomeScreen() {
   const [searchQuery, setSearchQuery] = useState('');
   const [isTyping, setIsTyping] = useState(false);
   const [isScrolling, setIsScrolling] = useState(false);
+  const [keyboardOffset, setKeyboardOffset] = useState(0);
 
   const isCreating = !!activePrayer && activePrayer.id === ''; // ny anteckning som inte är sparad än
   const isDirty =
@@ -111,8 +112,15 @@ export default function HomeScreen() {
   }, [userId]);
 
   useEffect(() => {
-    const showSub = Keyboard.addListener('keyboardWillShow', () => setIsTyping(true));
-    const hideSub = Keyboard.addListener('keyboardWillHide', () => setIsTyping(false));
+    const showSub = Keyboard.addListener('keyboardWillShow', (e) => {
+      setIsTyping(true);
+      // Add extra space when keyboard shows
+      setKeyboardOffset(40); // 80px extra space above keyboard
+    });
+    const hideSub = Keyboard.addListener('keyboardWillHide', () => {
+      setIsTyping(false);
+      setKeyboardOffset(0);
+    });
     return () => {
       showSub.remove();
       hideSub.remove();
@@ -367,7 +375,7 @@ export default function HomeScreen() {
               <KeyboardAvoidingView
                 style={{ flex: 1 }}
                 behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-                keyboardVerticalOffset={Platform.OS === 'ios' ? 100 : 20}
+                keyboardVerticalOffset={0}
                 enabled={true}
               >
                 <View style={styles.backButtonContainer}>
@@ -408,15 +416,19 @@ export default function HomeScreen() {
                   </TouchableOpacity>
                 </View>
 
-                <View style={styles.detailWrapper}>
+                <View style={[styles.detailWrapper, { paddingBottom: keyboardOffset }]}>
                   <ScrollView
                     ref={scrollViewRef}
                     style={{ flex: 1, paddingTop: TOPBAR_HEIGHT + 10 }}
-                    contentContainerStyle={{ paddingBottom: Platform.OS === 'ios' ? 400 : 200, flexGrow: 1 }}
+                    contentContainerStyle={{ 
+                      paddingBottom: Platform.OS === 'ios' ? 300 : 200, 
+                      flexGrow: 1 
+                    }}
                     keyboardShouldPersistTaps="always"
-                    keyboardDismissMode="on-drag"
+                    keyboardDismissMode="on-drag" 
                     showsVerticalScrollIndicator={false}
-                    automaticallyAdjustKeyboardInsets={Platform.OS === 'ios'}
+                    automaticallyAdjustKeyboardInsets={false}
+                    contentInsetAdjustmentBehavior="never"
                     automaticallyAdjustContentInsets={false}
                     scrollEventThrottle={16}
                     onScrollBeginDrag={() => setIsScrolling(true)}
