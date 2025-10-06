@@ -42,16 +42,16 @@ export const BlurOverlayProvider: React.FC<BlurOverlayProviderProps> = ({ childr
       
       {isBlurVisible && (
         <>
-          {/* Background blur layers without Modal */}
-          <View style={[StyleSheet.absoluteFillObject, styles.blurLayer1]} pointerEvents="none" />
-          <View style={[StyleSheet.absoluteFillObject, styles.blurLayer2]} pointerEvents="none" />
+          {/* Background blur layers without Modal - now blocks all touches */}
+          <View style={[StyleSheet.absoluteFillObject, styles.blurLayer1]} pointerEvents="auto" />
+          <View style={[StyleSheet.absoluteFillObject, styles.blurLayer2]} pointerEvents="auto" />
           <Animated.View 
             style={[
               StyleSheet.absoluteFillObject,
               styles.darkOverlay,
               { opacity: fadeAnim }
             ]}
-            pointerEvents="none"
+            pointerEvents="auto"
           />
         </>
       )}
@@ -71,18 +71,18 @@ export const useBlurOverlay = () => {
 const styles = StyleSheet.create({
   blurLayer1: {
     backgroundColor: 'rgba(74, 35, 90, 0.85)', // Purple tint
-    zIndex: 500,
-    elevation: 500,
+    zIndex: 998,
+    elevation: 998,
   },
   blurLayer2: {
     backgroundColor: 'rgba(0, 0, 0, 0.5)', // Dark overlay
-    zIndex: 600,
-    elevation: 600,
+    zIndex: 999,
+    elevation: 999,
   },
   darkOverlay: {
     backgroundColor: 'rgba(28, 14, 35, 0.3)', // Extra dark purple
-    zIndex: 700,
-    elevation: 700,
+    zIndex: 999,
+    elevation: 999,
   },
 });
 

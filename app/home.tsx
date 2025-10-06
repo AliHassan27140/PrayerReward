@@ -313,7 +313,7 @@ export default function HomeScreen() {
         <Text style={styles.timerText}>{formatTime(timer)}</Text>
 
         <TouchableOpacity
-          style={styles.button}
+          style={[styles.button, isRunning && styles.floatingButton]}
           onPress={toggleTimer}
           onPressIn={onPressIn}
           onPressOut={onPressOut}
@@ -445,8 +445,8 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   floatingTimer: {
-    zIndex: 1000, // High z-index to float above blur overlay
-    elevation: 1000, // For Android
+    zIndex: 1001, // High z-index to float above blur overlay
+    elevation: 1001, // For Android
   },
   lightningIconContainer: {
     position: 'absolute',
@@ -501,6 +501,10 @@ const styles = StyleSheet.create({
     position: 'absolute',
     top: '50%',
     transform: [{ translateY: -75 }],
+  },
+  floatingButton: {
+    zIndex: 1002, // Ensure button is above blur overlay when running
+    elevation: 1002, // For Android
   },
   buttonInner: {
     justifyContent: 'center',
