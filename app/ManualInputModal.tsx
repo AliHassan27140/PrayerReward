@@ -17,6 +17,10 @@ interface ManualInputModalProps {
   setManualMinutes: (minutes: string) => void;
   manualSeconds: string;
   setManualSeconds: (seconds: string) => void;
+  manualTimeHours: string;
+  setManualTimeHours: (hours: string) => void;
+  manualTimeMinutes: string;
+  setManualTimeMinutes: (minutes: string) => void;
   isSaving: boolean;
 }
 
@@ -32,11 +36,14 @@ const ManualInputModal: React.FC<ManualInputModalProps> = ({
   setManualMinutes,
   manualSeconds,
   setManualSeconds,
+  manualTimeHours,
+  setManualTimeHours,
+  manualTimeMinutes,
+  setManualTimeMinutes,
   isSaving
 }) => {
   const [manualHoursInput, setManualHoursInput] = useState<string>("");
   const [manualMinutesInput, setManualMinutesInput] = useState<string>("");
-  const [manualSecondsInput, setManualSecondsInput] = useState<string>(manualSeconds);
   const [showTimeInput, setShowTimeInput] = useState<boolean>(false);
   const [showDuration, setShowDuration] = useState<boolean>(false);
   
@@ -67,30 +74,35 @@ const ManualInputModal: React.FC<ManualInputModalProps> = ({
   useEffect(() => {
     if (visible) {
       setManualDate(getTodayDate());
+      // Reset all input fields when modal opens
+      setManualHoursInput('');
+      setManualMinutesInput('');
+      setDurationHours('0');
+      setDurationMinutes('0');
+      setDurationSeconds('0');
+      setSelectedTime('__ : __');
+      setSelectedDuration('0 : 0 : 0');
+      // Also reset the parent component's state
+      setManualHours('0');
+      setManualMinutes('0');
+      setManualSeconds('0');
+      setManualTimeHours('');
+      setManualTimeMinutes('');
     }
-  }, [visible, setManualDate]);
+  }, [visible, setManualDate, setManualHours, setManualMinutes, setManualSeconds, setManualTimeHours, setManualTimeMinutes]);
 
   // Handle time input change (for enter time field only)
   const handleHoursChange = (hours: string) => {
     if (hours.length <= 2 && /^[0-9]*$/.test(hours)) {
       setManualHoursInput(hours);
-      // Update the actual hours that will be saved
-      setManualHours(hours || durationHours);
+      setManualTimeHours(hours);
     }
   };
 
   const handleMinutesChange = (minutes: string) => {
     if (minutes.length <= 2 && /^[0-9]*$/.test(minutes)) {
       setManualMinutesInput(minutes);
-      // Update the actual minutes that will be saved
-      setManualMinutes(minutes || durationMinutes);
-    }
-  };
-
-  const handleSecondsChange = (seconds: string) => {
-    if (seconds.length <= 2 && /^[0-9]*$/.test(seconds)) {
-      setManualSecondsInput(seconds);
-      setManualSeconds(seconds);
+      setManualTimeMinutes(minutes);
     }
   };
 
@@ -228,7 +240,7 @@ const ManualInputModal: React.FC<ManualInputModalProps> = ({
                     selectedValue={durationHours}
                     onValueChange={(itemValue) => {
                       setDurationHours(itemValue.toString());
-                      setManualHours(manualHoursInput || itemValue.toString());
+                      setManualHours(itemValue.toString());
                       setSelectedDuration(`${itemValue} : ${durationMinutes} : ${durationSeconds}`);
                     }}
                     style={styles.timePicker}
@@ -246,7 +258,7 @@ const ManualInputModal: React.FC<ManualInputModalProps> = ({
                     selectedValue={durationMinutes}
                     onValueChange={(itemValue) => {
                       setDurationMinutes(itemValue.toString());
-                      setManualMinutes(manualMinutesInput || itemValue.toString());
+                      setManualMinutes(itemValue.toString());
                       setSelectedDuration(`${durationHours} : ${itemValue} : ${durationSeconds}`);
                     }}
                     style={styles.timePicker}

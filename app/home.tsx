@@ -31,6 +31,8 @@ export default function HomeScreen() {
   const [manualHours, setManualHours] = useState<string>('');
   const [manualMinutes, setManualMinutes] = useState<string>('');
   const [manualSeconds, setManualSeconds] = useState<string>('');
+  const [manualTimeHours, setManualTimeHours] = useState<string>('');
+  const [manualTimeMinutes, setManualTimeMinutes] = useState<string>('');
   const [language, setLanguage] = React.useState(i18n.locale || 'en');
   const [lightningScale] = useState(new Animated.Value(1));
   const [vibrationInterval, setVibrationInterval] = useState<ReturnType<typeof setInterval> | null>(null);
@@ -227,11 +229,33 @@ export default function HomeScreen() {
 
     const userId = auth.currentUser?.uid;
     const date = manualDate || getTodayDate();
-    const hours = parseInt(manualHours) || 0;
-    const minutes = parseInt(manualMinutes) || 0;
-    const seconds = parseInt(manualSeconds) || 0;
-    const totalSeconds = hours * 3600 + minutes * 60 + seconds;
-    const savedAt = Timestamp.now();
+    
+    // Duration from the duration pickers
+    const durationHours = parseInt(manualHours) || 0;
+    const durationMinutes = parseInt(manualMinutes) || 0;
+    const durationSeconds = parseInt(manualSeconds) || 0;
+    const totalSeconds = durationHours * 3600 + durationMinutes * 60 + durationSeconds;
+    
+    // Prevent saving if no duration was entered
+    if (totalSeconds === 0) {
+      alert('Please enter a duration for your prayer time');
+      setIsSaving(false);
+      return;
+    }
+    
+    // Create a timestamp for the saved time based on the user-selected time
+    let savedAt: Timestamp;
+    if (manualTimeHours && manualTimeMinutes) {
+      // User entered a specific time
+      const selectedDate = new Date(date);
+      selectedDate.setHours(parseInt(manualTimeHours) || 0);
+      selectedDate.setMinutes(parseInt(manualTimeMinutes) || 0);
+      selectedDate.setSeconds(0);
+      savedAt = Timestamp.fromDate(selectedDate);
+    } else {
+      // Default to current time if no time was entered
+      savedAt = Timestamp.now();
+    }
 
     if (!userId) {
       setIsSaving(false);
@@ -239,8 +263,14 @@ export default function HomeScreen() {
     }
 
     try {
-      const prayerId = savedAt.toMillis().toString();
+      const prayerId = Date.now().toString(); // Use Date.now() to ensure unique ID
       const userDocRef = doc(firestore, 'users', userId, 'prayerTimes', prayerId);
+      
+      console.log('Saving manual prayer with ID:', prayerId);
+      console.log('Date:', date);
+      console.log('Duration in seconds:', totalSeconds);
+      console.log('Formatted duration:', formatTime(totalSeconds));
+      
       await setDoc(userDocRef, {
         date: date,
         durationInSeconds: totalSeconds,
@@ -249,12 +279,21 @@ export default function HomeScreen() {
         prayerSavedAt: savedAt,
       });
 
+      console.log('Successfully saved manual prayer time');
+
+      // Reset all fields
       setManualModalVisible(false);
+      setManualHours('');
+      setManualMinutes('');
+      setManualSeconds('');
+      setManualTimeHours('');
+      setManualTimeMinutes('');
       setTimer(0);
       setIsRunning(false);
       router.push('/boneliv');
     } catch (error) {
       console.error('Error saving manual prayer time:', error);
+      alert('Failed to save prayer time. Please try again.');
     } finally {
       setIsSaving(false);
     }
@@ -380,7 +419,15 @@ export default function HomeScreen() {
       {/* Manual Input Modal */}
       <ManualInputModal
         visible={manualModalVisible}
-        onClose={() => setManualModalVisible(false)}
+        onClose={() => {
+          setManualModalVisible(false);
+          // Reset fields when closing
+          setManualHours('');
+          setManualMinutes('');
+          setManualSeconds('');
+          setManualTimeHours('');
+          setManualTimeMinutes('');
+        }}
         onSave={handleSaveManualTime}
         manualDate={manualDate}
         setManualDate={setManualDate}
@@ -390,6 +437,10 @@ export default function HomeScreen() {
         setManualMinutes={setManualMinutes}
         manualSeconds={manualSeconds}
         setManualSeconds={setManualSeconds}
+        manualTimeHours={manualTimeHours}
+        setManualTimeHours={setManualTimeHours}
+        manualTimeMinutes={manualTimeMinutes}
+        setManualTimeMinutes={setManualTimeMinutes}
         isSaving={isSaving}
       />
 
